@@ -24,7 +24,7 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, InputMe
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode, ChatType
 from Nia.config import BOT_NAME, START_IMG_URL, HELP_IMG_URL, SUPPORT_GROUP, SUPPORT_CHANNEL, OWNER_LINK
-from Nia.utils import ensure_user_exists, get_mention, track_group, log_to_channel, SUDO_USERS, stylize_text
+from Nia.utils import ensure_user_exists, get_mention, track_group, log_to_channel, SUDO_USERS, 
 
 SUDO_IMG = "https://files.catbox.moe/gyi5iu.jpg"
 
@@ -32,39 +32,39 @@ SUDO_IMG = "https://files.catbox.moe/gyi5iu.jpg"
 def get_start_keyboard(bot_username):
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(f"🎐 {stylize_text('Owner')}", url=OWNER_LINK),
-            InlineKeyboardButton(f"📖 {stylize_text('Diary')}", callback_data="help_main")
+            InlineKeyboardButton(f"🎐 {('Owner')}", url=OWNER_LINK),
+            InlineKeyboardButton(f"📖 {('Diary')}", callback_data="help_main")
         ],
         [
-            InlineKeyboardButton(f"➕ {stylize_text('Add Me Baby')} ➕", url=f"https://t.me/{bot_username}?startgroup=true")
+            InlineKeyboardButton(f"➕ {('Add Me Baby')} ➕", url=f"https://t.me/{bot_username}?startgroup=true")
         ],
         [
-            InlineKeyboardButton(f"☁️ {stylize_text('Support')}", url=SUPPORT_GROUP),
-            InlineKeyboardButton(f"👑 {stylize_text('Updates')}", url=SUPPORT_CHANNEL)
+            InlineKeyboardButton(f"☁️ {('Support')}", url=SUPPORT_GROUP),
+            InlineKeyboardButton(f"👑 {('Updates')}", url=SUPPORT_CHANNEL)
         ]
     ])
 
 def get_help_keyboard():
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(f"💞 {stylize_text('Social')}", callback_data="help_social"),
-            InlineKeyboardButton(f"👛 {stylize_text('Economy')}", callback_data="help_economy")
+            InlineKeyboardButton(f"💞 {('Social')}", callback_data="help_social"),
+            InlineKeyboardButton(f"👛 {('Economy')}", callback_data="help_economy")
         ],
         [
-            InlineKeyboardButton(f"⚔️ {stylize_text('RPG & War')}", callback_data="help_rpg"),
-            InlineKeyboardButton(f"🍥 {stylize_text('AI & Fun')}", callback_data="help_fun")
+            InlineKeyboardButton(f"⚔️ {('RPG & War')}", callback_data="help_rpg"),
+            InlineKeyboardButton(f"🍥 {('AI & Fun')}", callback_data="help_fun")
         ],
         [
-            InlineKeyboardButton(f"⛩️ {stylize_text('Group')}", callback_data="help_group"),
-            InlineKeyboardButton(f"🔐 {stylize_text('Sudo')}", callback_data="help_sudo")
+            InlineKeyboardButton(f"⛩️ {('Group')}", callback_data="help_group"),
+            InlineKeyboardButton(f"🔐 {('Sudo')}", callback_data="help_sudo")
         ],
         [
-            InlineKeyboardButton(f"🔙 {stylize_text('Back')}", callback_data="return_start")
+            InlineKeyboardButton(f"🔙 {('Back')}", callback_data="return_start")
         ]
     ])
 
 def get_back_keyboard():
-    return InlineKeyboardMarkup([[InlineKeyboardButton(f"🔙 {stylize_text('Back')}", callback_data="help_main")]])
+    return InlineKeyboardMarkup([[InlineKeyboardButton(f"🔙 {('Back')}", callback_data="help_main")]])
 
 # --- 🚀 COMMANDS ---
 
@@ -79,9 +79,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # --- THE ULTRA AESTHETIC CAPTION ---
         caption = (
-           f"👋 {stylize_text('Hey')} {user_link}!\n\n"
-           f"{stylize_text('Nia here — your new bestie for chats, fun & games')} 😌✨\n\n"
-           f"{stylize_text('Tap below and enjoy 👇')}"
+           f"👋 {('Hey')} {user_link}!\n\n"
+           f"{('Nia here — your new bestie for chats, fun & games')} 😌✨\n\n"
+           f"{('Tap below and enjoy 👇')}"
         )
 
         bot_un = context.bot.username if context.bot.username else "ZelvuxBot"
