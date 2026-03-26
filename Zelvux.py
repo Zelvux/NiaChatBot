@@ -34,10 +34,10 @@ from telegram.ext import (
 from telegram.request import HTTPXRequest
 
 # --- INTERNAL IMPORTS ---
-from baka.config import TOKEN, PORT
-from baka.utils import log_to_channel, BOT_NAME
+from Nia.config import TOKEN, PORT
+from Nia.utils import log_to_channel, BOT_NAME
 # Import all plugins
-from baka.plugins import start, economy, game, admin, broadcast, fun, events, welcome, ping, chatbot, riddle, social, ai_media, waifu, collection, shop, daily
+from Nia.plugins import start, economy, game, admin, broadcast, fun, events, welcome, ping, chatbot, riddle, social, ai_media, waifu, collection, shop, daily
 
 # --- FLASK SERVER ---
 app = Flask(__name__)
