@@ -79,25 +79,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # --- THE ULTRA AESTHETIC CAPTION ---
         caption = (
-           f"👋 {stylize_text('Hello')} {user_link}!\n\n"
+           f"👋 {stylize_text('Hey')} {user_link}!\n\n"
 
-           f"{stylize_text('Welcome to your smart RPG bot')} 💫\n\n"
-
-           f"🎮 {stylize_text('What you can do here')}\n\n"
-
-           f"⚔️ {stylize_text('Fight & Play')}\n"
-           f"   ➤ {stylize_text('Kill, Rob, Protect')}\n\n"
-
-           f"❤️ {stylize_text('Make Connections')}\n"
-           f"   ➤ {stylize_text('Marry, Couple, Waifu')}\n\n"
-
-           f"💸 {stylize_text('Earn & Spend')}\n"
-           f"   ➤ {stylize_text('Claim rewards, Give money, Shop items')}\n\n"
-
-           f"🤖 {stylize_text('AI Features')}\n"
-           f"   ➤ {stylize_text('Chat & generate cool stuff')}\n\n"
-
-           f"👇 {stylize_text('Use the buttons below to get started')}"
+f"{stylize_text('Nia here — your new bestie for chats, fun & games')} 😌✨\n\n"}"
         )
 
         bot_un = context.bot.username if context.bot.username else "ZelvuxBot"
