@@ -81,7 +81,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption = (
            f"👋 {stylize_text('Hey')} {user_link}!\n\n"
 
-f"{stylize_text('Nia here — your new bestie for chats, fun & games')} 😌✨\n\n"}"
+           f"{stylize_text('Nia here — your new bestie for chats, fun & games')} 😌✨\n\n"}"
         )
 
         bot_un = context.bot.username if context.bot.username else "ZelvuxBot"
