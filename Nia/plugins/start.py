@@ -32,15 +32,15 @@ SUDO_IMG = "https://files.catbox.moe/gyi5iu.jpg"
 def get_start_keyboard(bot_username):
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(f"🎐 {stylize_text('Updates')}", url=SUPPORT_CHANNEL),
-            InlineKeyboardButton(f"☁️ {stylize_text('Support')}", url=SUPPORT_GROUP)
+            InlineKeyboardButton(f"🎐 {stylize_text('Owner')}", url=OWNER_LINK),
+            InlineKeyboardButton(f"📖 {stylize_text('Diary')}", callback_data="help_main")
         ],
         [
             InlineKeyboardButton(f"➕ {stylize_text('Add Me Baby')} ➕", url=f"https://t.me/{bot_username}?startgroup=true")
         ],
         [
-            InlineKeyboardButton(f"📖 {stylize_text('Diary')}", callback_data="help_main"),
-            InlineKeyboardButton(f"👑 {stylize_text('Owner')}", url=OWNER_LINK)
+            InlineKeyboardButton(f"☁️ {stylize_text('Support')}", url=SUPPORT_GROUP),
+            InlineKeyboardButton(f"👑 {stylize_text('Updates')}", url=SUPPORT_CHANNEL)
         ]
     ])
 
