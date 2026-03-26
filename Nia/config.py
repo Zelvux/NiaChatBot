@@ -46,9 +46,9 @@ START_IMG_URL = os.getenv("START_IMG_URL", "https://telegra.ph/file/5e5480760e41
 HELP_IMG_URL = os.getenv("HELP_IMG_URL", "https://files.catbox.moe/5g37fy.jpg") 
 WELCOME_IMG_URL = os.getenv("WELCOME_IMG_URL", "https://files.catbox.moe/gyi5iu.jpg") 
 
-SUPPORT_GROUP = os.getenv("SUPPORT_GROUP", "https://t.me/YourSupportGroup")
-SUPPORT_CHANNEL = os.getenv("SUPPORT_CHANNEL", "https://t.me/YourUpdateChannel")
-OWNER_LINK = os.getenv("OWNER_LINK", "https://t.me/YourOwnerUsername")
+SUPPORT_GROUP = os.getenv("SUPPORT_GROUP", "https://t.me/zelvuxsupport")
+SUPPORT_CHANNEL = os.getenv("SUPPORT_CHANNEL", "https://t.me/zelvuxbots")
+OWNER_LINK = os.getenv("OWNER_LINK", "https://t.me/zelvuxd")
 
 # IDs
 try: LOGGER_ID = int(os.getenv("LOGGER_ID", "0").strip())
