@@ -24,7 +24,7 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, InputMe
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode, ChatType
 from Nia.config import BOT_NAME, START_IMG_URL, HELP_IMG_URL, SUPPORT_GROUP, SUPPORT_CHANNEL, OWNER_LINK
-from Nia.utils import ensure_user_exists, get_mention, track_group, log_to_channel, SUDO_USERS, 
+from Nia.utils import ensure_user_exists, get_mention, track_group, log_to_channel, SUDO_USERS, stylize_text
 
 SUDO_IMG = "https://files.catbox.moe/gyi5iu.jpg"
 
