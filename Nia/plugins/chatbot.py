@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from telegram.constants import ChatAction, ChatType
 
 from Nia.database import chatbot_collection
-from Nia.utils import stylize_text
+# ❌ stylize_text removed
 
 
 # -------- SETTINGS --------
@@ -130,7 +130,7 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if not msg or not msg.text:
         return
 
-    # ❌ bot to bot ignore (duplicate fix)
+    # ❌ bot to bot ignore
     if msg.from_user and msg.from_user.is_bot:
         return
 
@@ -158,7 +158,7 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             should_reply = True
             text = text.replace(f"@{bot_username}", "").strip()
 
-        elif text.lower().startswith(("hi", "hey", "hello", "Nia", "oye", "sun")):
+        elif text.lower().startswith(("hi", "hey", "hello", "nia", "oye", "sun")):
             should_reply = True
 
     if not should_reply:
@@ -168,9 +168,8 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     reply = await get_ai_reply(chat.id, text)
 
-    styled = stylize_text(reply)
-
-    await msg.reply_text(styled)
+    # ✅ directly reply (no stylize)
+    await msg.reply_text(reply)
 
 
 # -------- ECONOMY SUPPORT --------
@@ -230,6 +229,5 @@ async def ask_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     reply = await get_ai_reply(update.effective_chat.id, text)
 
-    styled = stylize_text(reply)
-
-    await update.message.reply_text(styled)
+    # ✅ no stylize here too
+    await update.message.reply_text(reply)
