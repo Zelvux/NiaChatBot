@@ -58,7 +58,7 @@ except: OWNER_ID = 0
 SUDO_IDS_STR = os.getenv("SUDO_IDS", "")
 
 # Game Constants
-BOT_NAME = "🫧 вαкα ×͜࿐"
+BOT_NAME = "ѕнικнα"
 REVIVE_COST = 500
 PROTECT_1D_COST = 1000
 PROTECT_2D_COST = 1800
