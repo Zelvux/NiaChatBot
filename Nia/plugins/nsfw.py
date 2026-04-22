@@ -5,14 +5,8 @@ import shutil
 
 from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
 
-from pyrogram import Client, filters, enums
-from pyrogram.types import (
-    Message,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    CallbackQuery,
-    ChatPermissions
-)
+from pyrogram import Client, filters
+from pyrogram.types import Message
 from pyrogram.enums import ChatMembersFilter
 
 from sightengine.client import SightengineClient
@@ -32,9 +26,6 @@ nsfw_block_db = nsfw_storage.nsfw_block.sticker
 nsfw_ignore_db = nsfw_storage.nsfw_ignore.sticker
 
 nsfw_cache = []
-nsfw_block_cache = []
-nsfw_ignore_cache = []
-
 LOAD = False
 
 # ---------------- API KEYS ---------------- #
@@ -49,20 +40,16 @@ api_credentials = [
 # ---------------- CACHE ---------------- #
 
 async def load_caches():
-    global nsfw_cache, nsfw_block_cache, nsfw_ignore_cache, LOAD
+    global nsfw_cache, LOAD
 
     if LOAD:
         return
-    LOAD = True
 
+    LOAD = True
     nsfw_cache.clear()
-    nsfw_block_cache.clear()
-    nsfw_ignore_cache.clear()
 
     try:
         nsfw_cache = await nsfw_db.find().to_list(None)
-        nsfw_block_cache = await nsfw_block_db.find().to_list(None)
-        nsfw_ignore_cache = await nsfw_ignore_db.find().to_list(None)
     except Exception as e:
         print("Cache error:", e)
 
@@ -136,7 +123,6 @@ async def take_action(client, message):
 
 async def take_review(client, message, action):
     REVIEW_CHANNEL = -1003953222870
-
     try:
         if message.photo:
             await client.send_photo(REVIEW_CHANNEL, message.photo.file_id, caption=action)
@@ -199,29 +185,19 @@ async def check_nsfw_video(client, message):
 
 # ---------------- BLOCK ---------------- #
 
-@Client.on_message(filters.command(["blockpack"]) & filters.user(SUDOERS), group=0)
+@Client.on_message(filters.command(["blockpack"]) & filters.user(list(SUDOERS)), group=0)
 async def block_pack_handler(client: Client, message: Message):
-
-    if message.reply_to_message:
-        msg = message.reply_to_message
-        if msg.photo:
-            file_id = msg.photo.file_unique_id
-        else:
-            return
+    if message.reply_to_message and message.reply_to_message.photo:
+        file_id = message.reply_to_message.photo.file_unique_id
         await nsfw_block_db.insert_one({"file_id": file_id})
         await message.reply("Blocked ✅")
 
 # ---------------- UNBLOCK ---------------- #
 
-@Client.on_message(filters.command(["unblockpack"]) & filters.user(SUDOERS), group=0)
+@Client.on_message(filters.command(["unblockpack"]) & filters.user(list(SUDOERS)), group=0)
 async def unblock_pack_handler(client: Client, message: Message):
-
-    if message.reply_to_message:
-        msg = message.reply_to_message
-        if msg.photo:
-            file_id = msg.photo.file_unique_id
-        else:
-            return
+    if message.reply_to_message and message.reply_to_message.photo:
+        file_id = message.reply_to_message.photo.file_unique_id
         await nsfw_ignore_db.insert_one({"file_id": file_id})
         await message.reply("Unblocked ✅")
 
