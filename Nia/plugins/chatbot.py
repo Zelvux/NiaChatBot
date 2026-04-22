@@ -655,7 +655,7 @@ async def unblock_pack_handler(client: Client, message: Message):
    
 # -------- SETTINGS --------
 
-API_URL = "https://stdgpt.vercel.app/?text="
+API_URL = "https://niaapi-28892feecb5a.herokuapp.com/?text="
 
 MAX_HISTORY = 6
 
