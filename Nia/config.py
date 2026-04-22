@@ -44,7 +44,7 @@ GIT_TOKEN = os.getenv("GIT_TOKEN", "")
 # Images & Links
 START_IMG_URL = os.getenv("START_IMG_URL", "https://telegra.ph/file/5e5480760e412bd402e88.jpg") 
 HELP_IMG_URL = os.getenv("HELP_IMG_URL", "https://files.catbox.moe/5g37fy.jpg") 
-WELCOME_IMG_URL = os.getenv("WELCOME_IMG_URL", "https://files.catbox.moe/tvhl9t.jpg") 
+WELCOME_IMG_URL = os.getenv("WELCOME_IMG_URL", "https://graph.org/file/298bb5c140cf1b0d93191-18d01489d7d52ad5df.jpg") 
 
 SUPPORT_GROUP = os.getenv("SUPPORT_GROUP", "https://t.me/zelvuxsupport")
 SUPPORT_CHANNEL = os.getenv("SUPPORT_CHANNEL", "https://t.me/zelvuxbots")
