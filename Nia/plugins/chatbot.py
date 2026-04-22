@@ -12,7 +12,7 @@ from Nia.database import chatbot_collection
 # ❌ stylize_text removed
 import random
 from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
-from pyrogram import Client
+from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatAction, ChatMemberStatus as CMS, ChatMembersFilter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, CallbackQuery, VideoChatScheduled
