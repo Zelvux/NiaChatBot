@@ -14,6 +14,13 @@ import random
 from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
 from pyrogram.enums import ChatAction, ChatMemberStatus as CMS, ChatMembersFilter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, CallbackQuery, VideoChatScheduled
+from Nia.plugins.Telegraph import get_url
+from sightengine.client import SightengineClient
+import re
+import os
+import aiohttp
+import asyncio
+import json
 
 NSFW = MongoCli("mongodb+srv://nsfwstorage:a@cluster0.c3iqn53.mongodb.net/?appName=Cluster0")
 stats_db = NSFW.Anonymous #(STORES ON/OFF SETTINGS OF GC)
@@ -87,6 +94,90 @@ async def check_restrict_permission(client: Client, message: Message) -> bool:
         
     except Exception:
         return False
+
+async def is_admin(client, chat_id, user_id):
+    try:
+        admin_ids = [
+            admin.user.id
+            async for admin in client.get_chat_members(
+                chat_id, filter=ChatMembersFilter.ADMINISTRATORS
+            )
+        ]
+        if user_id in admin_ids or user_id == chat_id or user_id in SUDOERS:
+            return True
+        return False
+    except Exception:
+        if user_id == chat_id or user_id in SUDOERS:
+            return True
+        return False
+
+
+@Client.on_message(filters.command("nsfwcheck", prefixes=[".", "/"]))
+async def nsfw_command(client: Client, message: Message):
+    command = message.text.split()
+    if len(command) > 1:
+        flag = command[1].lower()
+        chat_id = message.chat.id
+        bot_id = client.me.id
+        user = message.from_user
+        user_id = user.id
+        
+        admin = await is_admin(client, chat_id, user_id)
+
+        if not admin and not chat_id == user_id and not user_id == bot_id:
+            msg = await message.reply_text("**ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀɴ ᴀᴅᴍɪɴ 😶. ᴄᴏɴᴛᴀᴄᴛ ᴀɴ ᴀᴅᴍɪɴ ɪꜰ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴄʜᴀɴɢᴇ ɴꜱғᴡ sᴇᴛᴛɪɴɢꜱ.**")
+            await asyncio.sleep(8)
+            return await msg.delete()
+        
+        if flag in ["on", "enable"]:
+            nsfw_db.update_one(
+                {"chat_id": chat_id, "bot_id": bot_id},
+                {"$set": {"status": "enabled"}},
+                upsert=True
+            )
+            await message.reply_text("NSFW Content check has been **enabled** for this chat ✅.")
+            await load_caches()
+        
+        elif flag in ["off", "disable"]:
+            member = await client.get_chat_member(chat_id, user_id)
+            
+            if member.status == ChatMemberStatus.OWNER:
+                nsfw_db.update_one(
+                    {"chat_id": chat_id, "bot_id": bot_id},
+                    {"$set": {"status": "disabled"}},
+                    upsert=True
+                )
+                await message.reply_text("NSFW Content check has been **disabled** for this chat ❌.")
+                await load_caches()
+            else:
+                owner = None
+                async for member in client.get_chat_members(chat_id, filter=ChatMembersFilter.ADMINISTRATORS):
+                    if member.status == ChatMemberStatus.OWNER:
+                        owner = member
+                        break
+                
+                if not owner or not owner.user or owner.user.is_deleted or owner.user.status == "long_ago":
+                    if admin:
+                        nsfw_db.update_one(
+                            {"chat_id": chat_id, "bot_id": bot_id},
+                            {"$set": {"status": "disabled"}},
+                            upsert=True
+                        )
+                        await message.reply_text("Group owner not available. NSFW check disabled by admin.")
+                        await load_caches()
+                    else:
+                        await message.reply_text("Only the group owner can disable NSFW check ❌.")
+                else:
+                    await message.reply_text("Only the group owner can disable NSFW check ❌.")
+        
+        else:
+            await message.reply_text("Invalid option! Use `/nsfwcheck on` or `/nsfwcheck off`.")
+    else:
+        await message.reply_text(
+            "Please specify an option to enable or disable the nsfw check\n\n"
+            "Example: `/nsfwcheck on` or `/nsfwcheck off`"
+        )
+        
 
 @Client.on_callback_query(filters.regex(r"^(blockpack|unblockpack|approve)$"))
 async def review_callback_handler(client, callback_query: CallbackQuery):
