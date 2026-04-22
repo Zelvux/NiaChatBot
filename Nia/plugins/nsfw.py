@@ -247,15 +247,15 @@ async def take_review(message, action):
         ])
         try:
             if file_type == "photo":
-                await nexichat.send_photo(PHOTO_CHANNEL, file_to_send, caption=caption_text, reply_markup=buttons)
+                await client.send_photo(PHOTO_CHANNEL, file_to_send, caption=caption_text, reply_markup=buttons)
             elif file_type == "video":
-                await nexichat.send_video(PHOTO_CHANNEL, file_to_send, caption=caption_text, reply_markup=buttons)
+                await client.send_video(PHOTO_CHANNEL, file_to_send, caption=caption_text, reply_markup=buttons)
             elif file_type == "animation":
-                await nexichat.send_animation(PHOTO_CHANNEL, file_to_send, caption=caption_text, reply_markup=buttons)
+                await client.send_animation(PHOTO_CHANNEL, file_to_send, caption=caption_text, reply_markup=buttons)
             elif file_type == "sticker":
-                sent_msg = await nexichat.send_sticker(REVIEW_CHANNEL_ID, file_to_send)
+                sent_msg = await client.send_sticker(REVIEW_CHANNEL_ID, file_to_send)
                 await asyncio.sleep(1)
-                await nexichat.send_message(
+                await client.send_message(
                     REVIEW_CHANNEL_ID,
                     caption_text,
                     reply_to_message_id=sent_msg.id,
@@ -280,9 +280,9 @@ async def take_review(message, action):
             # elif file_type == "animation":
             #     await nexichat.send_animation(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
             if file_type == "sticker":
-                sent_msg = await nexichat.send_sticker(IGNORED_CHANNEL_ID, file_to_send)
+                sent_msg = await client.send_sticker(IGNORED_CHANNEL_ID, file_to_send)
                 await asyncio.sleep(1)
-                await nexichat.send_message(
+                await client.send_message(
                     IGNORED_CHANNEL_ID,
                     caption_text,
                     reply_to_message_id=sent_msg.id,
