@@ -34,4 +34,4 @@ COPY . .
 
 # 8. Command to start the bot
 # We use 'sh -c' to ensure environment variables are loaded correctly
-CMD ["python", "Ryan.py"]
+CMD ["python", "Zelvux.py"]
