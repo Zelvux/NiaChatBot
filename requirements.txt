@@ -13,3 +13,4 @@ motor
 aiohttp
 asyncio
 pyrogram
+sightengine
