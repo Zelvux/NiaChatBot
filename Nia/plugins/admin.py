@@ -49,7 +49,7 @@ async def sudo_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "‣ /addsudo [user]\n"
         "‣ /rmsudo [user]\n"
         "‣ /cleandb\n"
-        "‣ /sudolist"
+        "‣ /sudostdlist"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
