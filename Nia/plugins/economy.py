@@ -25,7 +25,7 @@ from telegram.constants import ParseMode
 from Nia.config import REGISTER_BONUS, OWNER_ID, TAX_RATE, CLAIM_BONUS, MARRIED_TAX_RATE, SHOP_ITEMS, MIN_CLAIM_MEMBERS
 from Nia.utils import ensure_user_exists, get_mention, format_money, resolve_target, log_to_channel, stylize_text, track_group
 from Nia.database import users_collection, groups_collection
-
+from Nia.plugins.chatbot import ask_mistral_raw
 # --- INVENTORY CALLBACK ---
 async def inventory_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
