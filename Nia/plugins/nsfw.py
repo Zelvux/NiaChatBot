@@ -1,6 +1,11 @@
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram.enums import ChatMembersFilter, ChatMemberStatus
+from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
+from Nia.utils import SUDO_USERS as SUDOERS
+from Nia.plugins.Telegraph import get_url
+from sightengine.client import SightengineClient
+from pyrogram.types import ChatPermissions
 import asyncio, random, json, shutil, requests
 
 NSFW = MongoCli("mongodb+srv://nsfwstorage:a@cluster0.c3iqn53.mongodb.net/?appName=Cluster0")
