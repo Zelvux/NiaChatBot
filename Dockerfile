@@ -15,7 +15,6 @@ ENV GIT_PYTHON_REFRESH=quiet
 # build-essential: For compiling certain python libraries if needed
 RUN apt-get update && apt-get install -y \
     git \
-    ffmpeg \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
