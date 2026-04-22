@@ -27,7 +27,6 @@ from telegram.constants import ParseMode
 from Nia.config import PROTECT_1D_COST, PROTECT_2D_COST, REVIVE_COST, AUTO_REVIVE_HOURS, OWNER_ID
 from Nia.utils import ensure_user_exists, resolve_target, is_protected, get_active_protection, format_time, format_money, get_mention, check_auto_revive, stylize_text
 from Nia.database import users_collection
-from Nia.plugins.chatbot import ask_mistral_raw
 
 # --- AI NARRATION ---
 async def get_narrative(action_type, attacker_mention, target_mention):
