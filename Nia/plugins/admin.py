@@ -80,7 +80,7 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- ADMIN COMMANDS ---
 
-async def sudolist(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def sudostdlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = "👑 <b>𝐎𝐰𝐧𝐞𝐫 & 𝐒𝐮𝐝𝐨𝐞𝐫𝐬:</b>\n\n"
     owner_doc = users_collection.find_one({"user_id": OWNER_ID})
     if not owner_doc:
