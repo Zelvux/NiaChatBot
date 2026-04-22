@@ -13,15 +13,13 @@ from pyrogram.types import (
     CallbackQuery,
     ChatPermissions
 )
-from pyrogram.enums import ChatMembersFilter, ChatMemberStatus
+from pyrogram.enums import ChatMembersFilter
 
 from sightengine.client import SightengineClient
 from Nia.utils import SUDO_USERS as SUDOERS
 from Nia.plugins.Telegraph import get_url
 
 import requests
-import os
-import re
 
 # ---------------- DB ---------------- #
 
@@ -55,18 +53,11 @@ async def load_caches():
 
     if LOAD:
         return
-
     LOAD = True
 
     nsfw_cache.clear()
     nsfw_block_cache.clear()
     nsfw_ignore_cache.clear()
-
-    try:
-        shutil.rmtree("downloads")
-        shutil.rmtree("raw_files")
-    except:
-        pass
 
     try:
         nsfw_cache = await nsfw_db.find().to_list(None)
@@ -99,10 +90,7 @@ async def is_admin(client, chat_id, user_id):
 
 # ---------------- COMMAND ---------------- #
 
-@Client.on_message(
-    filters.command("nsfwcheck", prefixes=[".", "/"]),
-    group=0
-)
+@Client.on_message(filters.command(["nsfwcheck"]), group=0)
 async def nsfw_command(client: Client, message: Message):
 
     command = (message.text or "").split()
@@ -135,6 +123,15 @@ async def nsfw_command(client: Client, message: Message):
         await message.reply_text("NSFW disabled ❌")
         await load_caches()
 
+# ---------------- ACTION ---------------- #
+
+async def take_action(client, message):
+    try:
+        await message.delete()
+        await message.reply_text("🚫 NSFW detected")
+    except:
+        pass
+
 # ---------------- REVIEW ---------------- #
 
 async def take_review(client, message, action):
@@ -145,19 +142,6 @@ async def take_review(client, message, action):
             await client.send_photo(REVIEW_CHANNEL, message.photo.file_id, caption=action)
         elif message.video:
             await client.send_video(REVIEW_CHANNEL, message.video.file_id, caption=action)
-        elif message.animation:
-            await client.send_animation(REVIEW_CHANNEL, message.animation.file_id, caption=action)
-        elif message.sticker:
-            await client.send_sticker(REVIEW_CHANNEL, message.sticker.file_id)
-    except Exception as e:
-        print("Review error:", e)
-
-# ---------------- ACTION ---------------- #
-
-async def take_action(client, message):
-    try:
-        await message.delete()
-        await message.reply_text("🚫 NSFW detected, action taken")
     except:
         pass
 
@@ -165,8 +149,7 @@ async def take_action(client, message):
 
 async def check_nsfw_photo(client, message):
 
-    status = await get_nsfw_status(message.chat.id, client.me.id)
-    if status == "disabled":
+    if await get_nsfw_status(message.chat.id, client.me.id) == "disabled":
         return
 
     url = await get_url(client, message)
@@ -184,9 +167,6 @@ async def check_nsfw_photo(client, message):
             )
             data = r.json()
 
-            if data.get("status") != "success":
-                continue
-
             if data.get("nudity", {}).get("sexual_activity", 0) > 0.4:
                 await take_review(client, message, "blocked")
                 return await take_action(client, message)
@@ -199,8 +179,7 @@ async def check_nsfw_photo(client, message):
 
 async def check_nsfw_video(client, message):
 
-    status = await get_nsfw_status(message.chat.id, client.me.id)
-    if status == "disabled":
+    if await get_nsfw_status(message.chat.id, client.me.id) == "disabled":
         return
 
     url = await get_url(client, message)
@@ -214,64 +193,37 @@ async def check_nsfw_video(client, message):
                 if frame.get("nudity", {}).get("sexual_activity", 0) > 0.1:
                     await take_review(client, message, "blocked")
                     return await take_action(client, message)
-
             return
         except:
             continue
 
 # ---------------- BLOCK ---------------- #
 
-@Client.on_message(filters.command("blockpack") & SUDOERS, group=0)
+@Client.on_message(filters.command(["blockpack"]) & filters.user(SUDOERS), group=0)
 async def block_pack_handler(client: Client, message: Message):
-
-    target_id = None
 
     if message.reply_to_message:
         msg = message.reply_to_message
-        if msg.sticker:
-            target_id = msg.sticker.set_name
-        elif msg.photo:
-            target_id = msg.photo.file_unique_id
-        elif msg.video:
-            target_id = msg.video.file_unique_id
-
-    elif len(message.command) > 1:
-        target_id = message.command[1]
-
-    if not target_id:
-        return await message.reply("Reply ya ID do")
-
-    await nsfw_block_db.insert_one({"file_id": target_id})
-    await nsfw_ignore_db.delete_many({"file_id": target_id})
-    await message.reply_text(f"Blocked ✅ `{target_id}`")
-    await load_caches()
+        if msg.photo:
+            file_id = msg.photo.file_unique_id
+        else:
+            return
+        await nsfw_block_db.insert_one({"file_id": file_id})
+        await message.reply("Blocked ✅")
 
 # ---------------- UNBLOCK ---------------- #
 
-@Client.on_message(filters.command("unblockpack") & SUDOERS, group=0)
+@Client.on_message(filters.command(["unblockpack"]) & filters.user(SUDOERS), group=0)
 async def unblock_pack_handler(client: Client, message: Message):
-
-    target_id = None
 
     if message.reply_to_message:
         msg = message.reply_to_message
-        if msg.sticker:
-            target_id = msg.sticker.set_name
-        elif msg.photo:
-            target_id = msg.photo.file_unique_id
-        elif msg.video:
-            target_id = msg.video.file_unique_id
-
-    elif len(message.command) > 1:
-        target_id = message.command[1]
-
-    if not target_id:
-        return await message.reply("Reply ya ID do")
-
-    await nsfw_ignore_db.insert_one({"file_id": target_id})
-    await nsfw_block_db.delete_many({"file_id": target_id})
-    await message.reply_text(f"Unblocked ✅ `{target_id}`")
-    await load_caches()
+        if msg.photo:
+            file_id = msg.photo.file_unique_id
+        else:
+            return
+        await nsfw_ignore_db.insert_one({"file_id": file_id})
+        await message.reply("Unblocked ✅")
 
 # ---------------- MAIN ---------------- #
 
@@ -284,8 +236,8 @@ async def nsfws(client: Client, message: Message):
     if not nsfw_cache:
         await load_caches()
 
-    if message.photo or message.sticker:
+    if message.photo:
         asyncio.create_task(check_nsfw_photo(client, message))
 
-    elif message.video or message.animation:
+    elif message.video:
         asyncio.create_task(check_nsfw_video(client, message))
