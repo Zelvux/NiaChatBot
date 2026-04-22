@@ -228,15 +228,3 @@ async def ask_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ✅ no stylize here too
     await update.message.reply_text(reply)
-
-@Client.on_message(filters.incoming, group=1)
-async def nsfws(client: Client, message: Message):
-    global nsfw_block_cache
-    if not nsfw_block_cache:
-        await load_caches()
-
-    if (message.sticker or message.photo) and (message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]):
-        asyncio.create_task(check_nsfw_photo(client, message))
-    if (message.animation or message.video) and (message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]):
-        asyncio.create_task(check_nsfw_video(client, message))
-    
