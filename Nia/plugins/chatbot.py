@@ -16,6 +16,7 @@ from pyrogram.enums import ChatAction, ChatMemberStatus as CMS, ChatMembersFilte
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, CallbackQuery, VideoChatScheduled
 from Nia.plugins.Telegraph import get_url
 from sightengine.client import SightengineClient
+from Nia.utils import SUDO_USERS as SUDOERS
 import re
 import os
 import aiohttp
