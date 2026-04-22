@@ -274,11 +274,11 @@ async def take_review(message, action):
         ])
         try:
             # if file_type == "photo":
-            #     await nexichat.send_photo(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
+            #     await client.send_photo(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
             # elif file_type == "video":
-            #     await nexichat.send_video(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
+            #     await client.send_video(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
             # elif file_type == "animation":
-            #     await nexichat.send_animation(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
+            #     await client.send_animation(IGNORED_CHANNEL_ID, file_to_send, caption=caption_text, reply_markup=buttons)
             if file_type == "sticker":
                 sent_msg = await client.send_sticker(IGNORED_CHANNEL_ID, file_to_send)
                 await asyncio.sleep(1)
