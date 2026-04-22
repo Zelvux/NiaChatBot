@@ -100,7 +100,7 @@ async def is_admin(client, chat_id, user_id):
 # ---------------- COMMAND ---------------- #
 
 @Client.on_message(
-    filters.command("nsfwcheck", prefixes=[".", "/"]) & ~filters.edited,
+    filters.command("nsfwcheck", prefixes=[".", "/"]),
     group=0
 )
 async def nsfw_command(client: Client, message: Message):
@@ -218,60 +218,6 @@ async def check_nsfw_video(client, message):
             return
         except:
             continue
-
-# ---------------- BLOCK ---------------- #
-
-@Client.on_message(filters.command("blockpack") & SUDOERS, group=0)
-async def block_pack_handler(client: Client, message: Message):
-
-    target_id = None
-
-    if message.reply_to_message:
-        msg = message.reply_to_message
-        if msg.sticker:
-            target_id = msg.sticker.set_name
-        elif msg.photo:
-            target_id = msg.photo.file_unique_id
-        elif msg.video:
-            target_id = msg.video.file_unique_id
-
-    elif len(message.command) > 1:
-        target_id = message.command[1]
-
-    if not target_id:
-        return await message.reply("Reply ya ID do")
-
-    await nsfw_block_db.insert_one({"file_id": target_id})
-    await nsfw_ignore_db.delete_many({"file_id": target_id})
-    await message.reply_text(f"Blocked ✅ `{target_id}`")
-    await load_caches()
-
-# ---------------- UNBLOCK ---------------- #
-
-@Client.on_message(filters.command("unblockpack") & SUDOERS, group=0)
-async def unblock_pack_handler(client: Client, message: Message):
-
-    target_id = None
-
-    if message.reply_to_message:
-        msg = message.reply_to_message
-        if msg.sticker:
-            target_id = msg.sticker.set_name
-        elif msg.photo:
-            target_id = msg.photo.file_unique_id
-        elif msg.video:
-            target_id = msg.video.file_unique_id
-
-    elif len(message.command) > 1:
-        target_id = message.command[1]
-
-    if not target_id:
-        return await message.reply("Reply ya ID do")
-
-    await nsfw_ignore_db.insert_one({"file_id": target_id})
-    await nsfw_block_db.delete_many({"file_id": target_id})
-    await message.reply_text(f"Unblocked ✅ `{target_id}`")
-    await load_caches()
 
 # ---------------- MAIN ---------------- #
 
