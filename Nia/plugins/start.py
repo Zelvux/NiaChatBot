@@ -26,7 +26,7 @@ from telegram.constants import ParseMode, ChatType
 from Nia.config import BOT_NAME, START_IMG_URL, HELP_IMG_URL, SUPPORT_GROUP, SUPPORT_CHANNEL, OWNER_LINK
 from Nia.utils import ensure_user_exists, get_mention, track_group, log_to_channel, SUDO_USERS, stylize_text
 
-SUDO_IMG = "https://files.catbox.moe/tvhl9t.jpg"
+SUDO_IMG = "https://graph.org/file/298bb5c140cf1b0d93191-18d01489d7d52ad5df.jpg"
 
 # --- 🌸 AESTHETIC KEYBOARDS ---
 def get_start_keyboard(bot_username):
