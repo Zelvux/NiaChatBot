@@ -11,3 +11,5 @@ edge-tts>=6.1.9
 langdetect>=1.0.9
 motor
 shutil
+aiohttp
+asyncio
