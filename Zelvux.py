@@ -37,7 +37,7 @@ from telegram.request import HTTPXRequest
 from Nia.config import TOKEN, PORT
 from Nia.utils import log_to_channel, BOT_NAME
 # Import all plugins
-from Nia.plugins import start, economy, game, admin, broadcast, fun, events, welcome, ping, chatbot, riddle, social, ai_media, waifu, collection, shop, daily
+from Nia.plugins import start, economy, game, admin, broadcast, fun, Telegraph, events, welcome, ping, chatbot, riddle, social, ai_media, waifu, collection, shop, daily
 
 # --- FLASK SERVER ---
 app = Flask(__name__)
