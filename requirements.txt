@@ -14,3 +14,4 @@ aiohttp
 asyncio
 pyrogram
 sightengine
+telegraph
