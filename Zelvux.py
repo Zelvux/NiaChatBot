@@ -37,7 +37,7 @@ from telegram.request import HTTPXRequest
 from Nia.config import TOKEN, PORT
 from Nia.utils import log_to_channel, BOT_NAME
 # Import all plugins
-from Nia.plugins import start, economy, game, admin, broadcast, fun, nsfw, Telegraph, events, welcome, ping, chatbot, riddle, social, ai_media, waifu, collection, shop, daily
+from Nia.plugins import start, economy, game, admin, broadcast, fun, abuse, nsfw, Telegraph, events, welcome, ping, chatbot, riddle, social, ai_media, waifu, collection, shop, daily
 
 # --- FLASK SERVER ---
 app = Flask(__name__)
@@ -173,7 +173,16 @@ if __name__ == '__main__':
         # 4. AI Chat
         app_bot.add_handler(MessageHandler((filters.TEXT | filters.Sticker.ALL) & ~filters.COMMAND, chatbot.ai_message_handler), group=4)
 
-          # ---------------- NSFW ----------------
+     # 🔥 Abuse Filter (FIXED INDENT)
+        app_bot.add_handler(
+            MessageHandler(
+                filters.TEXT & filters.ChatType.GROUPS & ~filters.COMMAND,
+                abuse.abuse_filter
+            ),
+            group=6
+        )
+        
+        # ---------------- NSFW ----------------
 
         app_bot.add_handler(CommandHandler("nsfwcheck", nsfw.nsfw_command))
 
