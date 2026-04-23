@@ -31,7 +31,7 @@ LOAD = False
 # ---------------- API KEYS ---------------- #
 
 api_credentials = [
-    {'api_user': '1901288204', 'api_secret': '5PMkvUfRQq6M4BaoZeorD54FSkH6UiKT'},
+    {'api_user': '1226977330', 'api_secret': 'oKUPqWsQ8npZ6rHvmjmdj4gQZuhCzvWA'},
     {'api_user': '1769346709', 'api_secret': 'UeGqP5mGQjKyuhvokLMC8SZ97XSr5Aoo'},
     {'api_user': '889764613', 'api_secret': '2AFdswWpMMreJnCKn6geB3Yh9qQjZnKm'},
     {'api_user': '359176100', 'api_secret': '3VWntaGo5RcXAYmBSStMY2g35cJ6S3cC'},
