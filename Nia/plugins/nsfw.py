@@ -1,23 +1,30 @@
-import asyncio
-import random
+# ----- NSFW SYSTEM (PTB FULL VERSION) -----
+
 import json
-import shutil
+import random
+import asyncio
+import requests
+
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ChatPermissions
+)
+
+from telegram.ext import (
+    ContextTypes,
+    MessageHandler,
+    CommandHandler,
+    CallbackQueryHandler,
+    filters
+)
 
 from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
 
-from pyrogram import Client, filters
-from pyrogram.types import Message
-from pyrogram.enums import ChatMembersFilter
-
-from sightengine.client import SightengineClient
-from Nia.utils import SUDO_USERS as SUDOERS
-from Nia.plugins.Telegraph import get_url
-
-import requests
-
-# ---------------- DB ---------------- #
-
+# ---------------- DATABASE ----------------
 NSFW = MongoCli("mongodb+srv://nsfwstorage:a@cluster0.c3iqn53.mongodb.net/?appName=Cluster0")
+
 stats_db = NSFW.Anonymous
 nsfw_storage = NSFW.STORAGE
 
@@ -26,69 +33,60 @@ nsfw_block_db = nsfw_storage.nsfw_block.sticker
 nsfw_ignore_db = nsfw_storage.nsfw_ignore.sticker
 
 nsfw_cache = []
+nsfw_block_cache = []
+nsfw_ignore_cache = []
+
 LOAD = False
 
-# ---------------- API KEYS ---------------- #
 
-api_credentials = [
-    {'api_user': '1226977330', 'api_secret': 'oKUPqWsQ8npZ6rHvmjmdj4gQZuhCzvWA'},
-    {'api_user': '1820340144', 'api_secret': 'sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz'},
-]
-
-# ---------------- CACHE ---------------- #
-
+# ---------------- CACHE ----------------
 async def load_caches():
-    global nsfw_cache, LOAD
+    global nsfw_cache, nsfw_block_cache, nsfw_ignore_cache, LOAD
 
     if LOAD:
         return
 
     LOAD = True
-    nsfw_cache.clear()
 
-    try:
-        nsfw_cache = await nsfw_db.find().to_list(None)
-    except Exception as e:
-        print("Cache error:", e)
+    nsfw_cache = await nsfw_db.find().to_list(None)
+    nsfw_block_cache = await nsfw_block_db.find().to_list(None)
+    nsfw_ignore_cache = await nsfw_ignore_db.find().to_list(None)
 
+    print("✅ NSFW cache loaded")
     LOAD = False
 
 
+# ---------------- STATUS ----------------
 async def get_nsfw_status(chat_id, bot_id):
     for data in nsfw_cache:
         if data.get("chat_id") == chat_id and data.get("bot_id") == bot_id:
             return data.get("status", "enabled")
     return "enabled"
 
-# ---------------- ADMIN ---------------- #
 
-async def is_admin(client, chat_id, user_id):
-    try:
-        admins = [
-            admin.user.id async for admin in client.get_chat_members(
-                chat_id, filter=ChatMembersFilter.ADMINISTRATORS
-            )
-        ]
-        return user_id in admins or user_id in SUDOERS
-    except:
-        return user_id in SUDOERS
+# ---------------- ADMIN CHECK ----------------
+async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    member = await context.bot.get_chat_member(
+        update.effective_chat.id,
+        update.effective_user.id
+    )
+    return member.status in ["administrator", "creator"]
 
-# ---------------- COMMAND ---------------- #
 
-@Client.on_message(filters.command(["nsfwcheck"]), group=0)
-async def nsfw_command(client: Client, message: Message):
+# ---------------- COMMAND ----------------
+async def nsfw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        return await update.message.reply_text(
+            "Use:\n/nsfwcheck on\n/nsfwcheck off"
+        )
 
-    command = (message.text or "").split()
+    if not await is_admin(update, context):
+        return await update.message.reply_text("❌ Admin only command")
 
-    if len(command) < 2:
-        return await message.reply_text("Use: /nsfwcheck on/off")
+    flag = context.args[0].lower()
 
-    flag = command[1].lower()
-    chat_id = message.chat.id
-    bot_id = client.me.id
-
-    if not await is_admin(client, chat_id, message.from_user.id):
-        return await message.reply_text("Admin only ❌")
+    chat_id = update.effective_chat.id
+    bot_id = context.bot.id
 
     if flag in ["on", "enable"]:
         await nsfw_db.update_one(
@@ -96,8 +94,7 @@ async def nsfw_command(client: Client, message: Message):
             {"$set": {"status": "enabled"}},
             upsert=True
         )
-        await message.reply_text("NSFW enabled ✅")
-        await load_caches()
+        await update.message.reply_text("✅ NSFW Enabled")
 
     elif flag in ["off", "disable"]:
         await nsfw_db.update_one(
@@ -105,113 +102,117 @@ async def nsfw_command(client: Client, message: Message):
             {"$set": {"status": "disabled"}},
             upsert=True
         )
-        await message.reply_text("NSFW disabled ❌")
-        await load_caches()
+        await update.message.reply_text("❌ NSFW Disabled")
 
-# ---------------- ACTION ---------------- #
+    await load_caches()
 
-async def take_action(client, message):
+
+# ---------------- ACTION ----------------
+async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.message
+
     try:
-        await message.delete()
-        await message.reply_text("🚫 NSFW detected")
+        await msg.delete()
     except:
         pass
 
-# ---------------- REVIEW ---------------- #
+    user = msg.from_user.mention_html()
 
-async def take_review(client, message, action):
-    REVIEW_CHANNEL = -1003953222870
+    text = f"🚫 NSFW Detected\n\nUser: {user}"
+
+    await msg.chat.send_message(text, parse_mode="HTML")
+
     try:
-        if message.photo:
-            await client.send_photo(REVIEW_CHANNEL, message.photo.file_id, caption=action)
-        elif message.video:
-            await client.send_video(REVIEW_CHANNEL, message.video.file_id, caption=action)
+        await context.bot.restrict_chat_member(
+            msg.chat.id,
+            msg.from_user.id,
+            permissions=ChatPermissions(can_send_messages=False)
+        )
     except:
         pass
 
-# ---------------- CHECK PHOTO ---------------- #
 
-async def check_nsfw_photo(client, message):
+# ---------------- REVIEW ----------------
+async def review_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-    if await get_nsfw_status(message.chat.id, client.me.id) == "disabled":
+    await query.edit_message_text("✅ Action Done")
+
+
+# ---------------- NSFW CHECK ----------------
+async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.message
+
+    if not msg:
         return
 
-    url = await get_url(client, message)
-
-    for creds in api_credentials:
-        try:
-            r = requests.get(
-                "https://api.sightengine.com/1.0/check.json",
-                params={
-                    "url": url,
-                    "models": "nudity-2.1",
-                    "api_user": creds["api_user"],
-                    "api_secret": creds["api_secret"],
-                },
-            )
-            data = r.json()
-
-            if data.get("nudity", {}).get("sexual_activity", 0) > 0.4:
-                await take_review(client, message, "blocked")
-                return await take_action(client, message)
-
-            return
-        except:
-            continue
-
-# ---------------- CHECK VIDEO ---------------- #
-
-async def check_nsfw_video(client, message):
-
-    if await get_nsfw_status(message.chat.id, client.me.id) == "disabled":
+    if not (msg.photo or msg.sticker or msg.animation or msg.video):
         return
 
-    url = await get_url(client, message)
+    chat_id = msg.chat.id
+    bot_id = context.bot.id
 
-    for creds in api_credentials:
-        try:
-            se = SightengineClient(creds["api_user"], creds["api_secret"])
-            result = se.check("nudity-2.1").video_sync(url)
+    status = await get_nsfw_status(chat_id, bot_id)
 
-            for frame in result.get("data", {}).get("frames", []):
-                if frame.get("nudity", {}).get("sexual_activity", 0) > 0.1:
-                    await take_review(client, message, "blocked")
-                    return await take_action(client, message)
-            return
-        except:
-            continue
+    if status == "disabled":
+        return
 
-# ---------------- BLOCK ---------------- #
+    # ---- FILE URL ----
+    file = None
 
-@Client.on_message(filters.command(["blockpack"]) & filters.user(list(SUDOERS)), group=0)
-async def block_pack_handler(client: Client, message: Message):
-    if message.reply_to_message and message.reply_to_message.photo:
-        file_id = message.reply_to_message.photo.file_unique_id
-        await nsfw_block_db.insert_one({"file_id": file_id})
-        await message.reply("Blocked ✅")
+    if msg.photo:
+        file = await msg.photo[-1].get_file()
+    elif msg.sticker:
+        file = await context.bot.get_file(msg.sticker.file_id)
+    elif msg.animation:
+        file = await context.bot.get_file(msg.animation.file_id)
+    elif msg.video:
+        file = await context.bot.get_file(msg.video.file_id)
 
-# ---------------- UNBLOCK ---------------- #
+    if not file:
+        return
 
-@Client.on_message(filters.command(["unblockpack"]) & filters.user(list(SUDOERS)), group=0)
-async def unblock_pack_handler(client: Client, message: Message):
-    if message.reply_to_message and message.reply_to_message.photo:
-        file_id = message.reply_to_message.photo.file_unique_id
-        await nsfw_ignore_db.insert_one({"file_id": file_id})
-        await message.reply("Unblocked ✅")
+    url = file.file_path
 
-# ---------------- MAIN ---------------- #
+    # ---- API ----
+    params = {
+        "url": url,
+        "models": "nudity-2.1",
+        "api_user": "1901288204",
+        "api_secret": "5PMkvUfRQq6M4BaoZeorD54FSkH6UiKT"
+    }
 
-@Client.on_message(
-    filters.incoming & ~filters.command(["nsfwcheck", "blockpack", "unblockpack"]),
-    group=1
-)
-async def nsfws(client: Client, message: Message):
+    try:
+        r = requests.get(
+            "https://api.sightengine.com/1.0/check.json",
+            params=params
+        )
 
-    if not nsfw_cache:
-        await load_caches()
+        data = json.loads(r.text)
 
-    if message.photo:
-        asyncio.create_task(check_nsfw_photo(client, message))
+        nudity = data.get("nudity", {})
 
-    elif message.video:
-        asyncio.create_task(check_nsfw_video(client, message))
+        score = max([
+            nudity.get("sexual_activity", 0),
+            nudity.get("sexual_display", 0),
+            nudity.get("erotica", 0),
+            nudity.get("very_suggestive", 0)
+        ])
+
+        if score > 0.4:
+            await take_action(update, context)
+
+    except Exception as e:
+        print("NSFW Error:", e)
+
+
+# ---------------- SETUP ----------------
+def setup(app):
+    app.add_handler(CommandHandler("nsfwcheck", nsfw_command))
+    app.add_handler(MessageHandler(
+        (filters.PHOTO | filters.Sticker.ALL | filters.VIDEO | filters.ANIMATION)
+        & filters.ChatType.GROUPS,
+        check_nsfw
+    ))
+    app.add_handler(CallbackQueryHandler(review_callback))
