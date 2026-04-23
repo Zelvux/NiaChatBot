@@ -32,9 +32,7 @@ LOAD = False
 
 api_credentials = [
     {'api_user': '1226977330', 'api_secret': 'oKUPqWsQ8npZ6rHvmjmdj4gQZuhCzvWA'},
-    {'api_user': '1769346709', 'api_secret': 'UeGqP5mGQjKyuhvokLMC8SZ97XSr5Aoo'},
-    {'api_user': '889764613', 'api_secret': '2AFdswWpMMreJnCKn6geB3Yh9qQjZnKm'},
-    {'api_user': '359176100', 'api_secret': '3VWntaGo5RcXAYmBSStMY2g35cJ6S3cC'},
+    {'api_user': '1820340144', 'api_secret': 'sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz'},
 ]
 
 # ---------------- CACHE ---------------- #
