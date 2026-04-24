@@ -155,7 +155,7 @@ if __name__ == '__main__':
                 # 🔥 Abuse Filter
         app_bot.add_handler(
             MessageHandler(
-                filters.TEXT & filters.ChatType.GROUPS & ~filters.COMMAND,
+                filters.TEXT & filters.ChatType.GROUPS & filters.COMMAND,
                 abuse.abuse_filter
             ),
             group=6
