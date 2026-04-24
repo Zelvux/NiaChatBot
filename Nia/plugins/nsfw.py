@@ -39,28 +39,6 @@ nsfw_ignore_cache = []
 LOAD = False
 
 
-# ---------------- UPLOAD ----------------
-def upload_file(file_path):
-    try:
-        with open(file_path, "rb") as f:
-            res = requests.post(
-                "https://catbox.moe/user/api.php",
-                data={"reqtype": "fileupload"},
-                files={"fileToUpload": (os.path.basename(file_path), f)},
-                timeout=30
-            )
-
-        if res.status_code == 200:
-            return res.text.strip()
-        else:
-            print("Upload Failed:", res.status_code, res.text)
-
-    except Exception as e:
-        print("Upload Error:", e)
-
-    return None
-
-
 # ---------------- CACHE ----------------
 async def load_caches():
     global nsfw_cache, nsfw_block_cache, nsfw_ignore_cache, LOAD
@@ -187,42 +165,28 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if status == "disabled":
         return
 
-    file = None
-    local_path = None
     url = None
 
     try:
-        # 🔥 PHOTO (DIRECT)
+        # 🔥 DIRECT TELEGRAM URL
         if msg.photo:
             file = await msg.photo[-1].get_file()
             url = file.file_path
 
-        # 🔥 VIDEO (DIRECT)
         elif msg.video:
             file = await context.bot.get_file(msg.video.file_id)
             url = file.file_path
 
-        # 🔥 GIF / ANIMATION (DIRECT)
         elif msg.animation:
             file = await context.bot.get_file(msg.animation.file_id)
             url = file.file_path
 
-        # 🔥 STICKER (UPLOAD)
         elif msg.sticker:
             file = await context.bot.get_file(msg.sticker.file_id)
+            url = file.file_path
 
-            ext = ".webp"
-            local_path = os.path.join(tempfile.gettempdir(), file.file_id + ext)
-
-            await file.download_to_drive(local_path)
-
-            print("📥 Sticker Downloaded:", local_path)
-
-            url = upload_file(local_path)
-
-        # ❌ अगर URL नहीं मिला
         if not url:
-            print("❌ URL missing / upload failed")
+            print("❌ URL not found")
             return
 
         print("🌐 Using URL:", url)
@@ -256,15 +220,9 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         print("🔥 NSFW SCORE:", score)
 
+        # 🔥 FINAL DECISION
         if score > 0.25:
             await take_action(update, context)
 
     except Exception as e:
         print("NSFW Error:", e)
-
-    finally:
-        try:
-            if local_path and os.path.exists(local_path):
-                os.remove(local_path)
-        except:
-            pass
