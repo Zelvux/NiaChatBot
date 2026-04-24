@@ -2,6 +2,8 @@ import json
 import random
 import asyncio
 import requests
+import os
+import tempfile
 
 from telegram import (
     Update,
@@ -35,6 +37,23 @@ nsfw_block_cache = []
 nsfw_ignore_cache = []
 
 LOAD = False
+
+
+# ---------------- UPLOAD ----------------
+def upload_file(file_path):
+    try:
+        with open(file_path, "rb") as f:
+            res = requests.post(
+                "https://catbox.moe/user/api.php",
+                data={"reqtype": "fileupload"},
+                files={"fileToUpload": f},
+                timeout=20
+            )
+        if res.status_code == 200:
+            return res.text.strip()
+    except Exception as e:
+        print("Upload Error:", e)
+    return None
 
 
 # ---------------- CACHE ----------------
@@ -142,7 +161,6 @@ async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def review_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-
     await query.edit_message_text("✅ Action Done")
 
 
@@ -165,16 +183,14 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     file = None
+    local_path = None
 
     try:
+        # GET FILE
         if msg.photo:
             file = await msg.photo[-1].get_file()
 
         elif msg.sticker:
-            # 🔥 animated sticker skip
-            if msg.sticker.is_animated or msg.sticker.is_video:
-                print("⚠️ Skipping animated sticker")
-                return
             file = await context.bot.get_file(msg.sticker.file_id)
 
         elif msg.animation:
@@ -183,29 +199,36 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif msg.video:
             file = await context.bot.get_file(msg.video.file_id)
 
-    except Exception as e:
-        print("File Error:", e)
-        return
+        if not file:
+            return
 
-    if not file:
-        return
+        # DOWNLOAD
+        local_path = os.path.join(tempfile.gettempdir(), file.file_id)
+        await file.download_to_drive(local_path)
 
-    url = file.file_path
+        print("📥 Downloaded:", local_path)
 
-    print("🔍 Checking URL:", url)
+        # UPLOAD
+        url = upload_file(local_path)
 
-    params = {
-        "url": url,
-        "models": "nudity-2.1",
-        "api_user": "1820340144",
-        "api_secret": "sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz"
-    }
+        if not url:
+            print("❌ Upload failed")
+            return
 
-    try:
+        print("🌐 Uploaded URL:", url)
+
+        # API CALL
+        params = {
+            "url": url,
+            "models": "nudity-2.1",
+            "api_user": "1820340144",
+            "api_secret": "sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz"
+        }
+
         r = requests.get(
             "https://api.sightengine.com/1.0/check.json",
             params=params,
-            timeout=10
+            timeout=15
         )
 
         data = json.loads(r.text)
@@ -223,9 +246,15 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         print("🔥 NSFW SCORE:", score)
 
-        # 🔥 lowered threshold for testing
-        if score > 0.2:
+        if score > 0.25:
             await take_action(update, context)
 
     except Exception as e:
         print("NSFW Error:", e)
+
+    finally:
+        try:
+            if local_path and os.path.exists(local_path):
+                os.remove(local_path)
+        except:
+            pass
