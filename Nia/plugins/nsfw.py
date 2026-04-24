@@ -66,11 +66,14 @@ async def get_nsfw_status(chat_id, bot_id):
 
 # ---------------- ADMIN CHECK ----------------
 async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    member = await context.bot.get_chat_member(
-        update.effective_chat.id,
-        update.effective_user.id
-    )
-    return member.status in ["administrator", "creator"]
+    try:
+        member = await context.bot.get_chat_member(
+            update.effective_chat.id,
+            update.effective_user.id
+        )
+        return member.status in ["administrator", "creator"]
+    except:
+        return False
 
 
 # ---------------- COMMAND ----------------
@@ -116,7 +119,10 @@ async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         pass
 
-    user = msg.from_user.mention_html()
+    try:
+        user = msg.from_user.mention_html()
+    except:
+        user = "Unknown"
 
     text = f"🚫 NSFW Detected\n\nUser: {user}"
 
@@ -161,14 +167,18 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ---- FILE URL ----
     file = None
 
-    if msg.photo:
-        file = await msg.photo[-1].get_file()
-    elif msg.sticker:
-        file = await context.bot.get_file(msg.sticker.file_id)
-    elif msg.animation:
-        file = await context.bot.get_file(msg.animation.file_id)
-    elif msg.video:
-        file = await context.bot.get_file(msg.video.file_id)
+    try:
+        if msg.photo:
+            file = await msg.photo[-1].get_file()
+        elif msg.sticker:
+            file = await context.bot.get_file(msg.sticker.file_id)
+        elif msg.animation:
+            file = await context.bot.get_file(msg.animation.file_id)
+        elif msg.video:
+            file = await context.bot.get_file(msg.video.file_id)
+    except Exception as e:
+        print("File Error:", e)
+        return
 
     if not file:
         return
@@ -186,7 +196,8 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         r = requests.get(
             "https://api.sightengine.com/1.0/check.json",
-            params=params
+            params=params,
+            timeout=10
         )
 
         data = json.loads(r.text)
