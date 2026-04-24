@@ -1,20 +1,8 @@
-import re
 from telegram import Update
 from telegram.ext import ContextTypes
 
-# 🔥 apna actual collection import kar (IMPORTANT)
-from Nia.database import chatbot_collection  # 👉 isko apne project ke hisab se check kar
-
-# 🔥 optional
-try:
-    from Nia.utils import load_caches
-except:
-    load_caches = None
-
-
-# ---------------- ABUSE LIST ---------------- #
-
-abuse_list = [
+# 🔥 abuse words
+abuse_words = set([
     "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
     "bevda", "bewda", "bevdey", "bewday", "bevakoof", "bevkoof", "bevkuf", "bewakoof", "bewkoof", "bewkuf", "bhadua",
     "bhaduaa", "bhadva", "bhadvaa", "bhadwa", "bhadwaa", "bhosada", "bhosda", "bhosdaa", "bhosdike", "bhonsdike",
@@ -41,43 +29,21 @@ abuse_list = [
     "मारो", "मारूंगा", "मादरचोद", "मादरचूत", "मादरचुत", "मम्मे", "मूत", "मुत", "मूतने", "मुतने", "मूठ", "मुठ",
     "नुननी", "नुननु", "पाजी", "पेसाब", "पेशाब", "पिल्ला", "पिल्ले", "पिसाब", "पोरकिस्तान", "रांड", "रंडी",
     "सुअर", "सूअर", "टट्टे", "टट्टी", "उल्लू"
-]
+])
 
-# ---------------- MAIN FUNCTION ---------------- #
+# ---------------- FILTER ---------------- #
 
-async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def abuse_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         message = update.message
-        if not message:
+
+        if not message or not message.text:
             return
 
-        ok = await message.reply_text("🔍 Searching abusive replies...")
+        text = message.text.lower()
 
-        deleted_count = 0
-
-        # 🔥 SAFE METHOD (NO CRASH)
-        for word in abuse_list:
-            try:
-                result = await chatbot_collection.delete_many({
-                    "$or": [
-                        {"word": {"$regex": word, "$options": "i"}},
-                        {"text": {"$regex": word, "$options": "i"}}
-                    ]
-                })
-                deleted_count += result.deleted_count
-            except:
-                continue
-
-        await ok.edit_text(f"✅ Deleted {deleted_count} abusive replies.")
-
-        # 🔥 cache reload
-        if load_caches:
-            try:
-                await load_caches()
-            except:
-                pass
+        if any(word in text for word in abuse_words):
+            await message.delete()
 
     except Exception as e:
-        print(f"[ERROR delete_abusive_replies] {e}")
-        if update.message:
-            await update.message.reply_text("❌ Error while deleting.")
+        print(f"[Abuse Filter Error] {e}")
