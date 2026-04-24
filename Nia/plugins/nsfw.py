@@ -189,8 +189,8 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     params = {
         "url": url,
         "models": "nudity-2.1",
-        "api_user": "1901288204",
-        "api_secret": "5PMkvUfRQq6M4BaoZeorD54FSkH6UiKT"
+        "api_user": "1820340144",
+        "api_secret": "sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz"
     }
 
     try:
