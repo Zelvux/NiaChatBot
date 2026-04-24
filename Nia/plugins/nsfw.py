@@ -2,7 +2,7 @@ import json
 import random
 import requests
 
-from telegram import Update, ChatPermissions
+from telegram import Update, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
@@ -65,6 +65,41 @@ async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print("Restrict failed:", e)
 
+    # 🔥 OPTIONAL BUTTON
+    buttons = [
+        [
+            InlineKeyboardButton("🚫 Delete", callback_data="nsfw_delete"),
+            InlineKeyboardButton("✅ Ignore", callback_data="nsfw_ignore")
+        ]
+    ]
+
+    await context.bot.send_message(
+        chat_id=msg.chat.id,
+        text="⚠️ NSFW Detected",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+
+# ---------------- CALLBACK ----------------
+async def review_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+
+    if not query:
+        return
+
+    await query.answer()
+
+    data = query.data
+
+    if data == "nsfw_delete":
+        await query.edit_message_text("🚫 Deleted by admin")
+
+    elif data == "nsfw_ignore":
+        await query.edit_message_text("✅ Ignored")
+
+    else:
+        await query.edit_message_text("⚠️ Unknown action")
+
 
 # ---------------- NSFW COMMAND ----------------
 async def nsfw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -122,12 +157,8 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # ---------------- PHOTO ----------------
         if msg.photo:
-            print("📸 PHOTO")
-
             file = await msg.photo[-1].get_file()
             url = file.file_path
-
-            print("URL:", url)
 
             r = requests.get(
                 "https://api.sightengine.com/1.0/check.json",
@@ -140,18 +171,13 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             data = r.json()
-            print("API:", data)
-
             score = max(data.get("nudity", {}).values(), default=0)
-            print("🔥 SCORE:", score)
 
             if score > 0.25:
                 return await take_action(update, context)
 
         # ---------------- VIDEO / GIF ----------------
         elif msg.video or msg.animation:
-            print("🎥 VIDEO/GIF")
-
             file = await context.bot.get_file(
                 msg.video.file_id if msg.video else msg.animation.file_id
             )
@@ -160,43 +186,26 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
             client = SightengineClient(creds['api_user'], creds['api_secret'])
             output = client.check('nudity-2.1').video_sync(url)
 
-            print("API:", output)
-
             for frame in output.get("data", {}).get("frames", []):
                 score = max(frame.get("nudity", {}).values(), default=0)
-                print("FRAME SCORE:", score)
-
                 if score > 0.2:
                     return await take_action(update, context)
 
         # ---------------- STICKER ----------------
         elif msg.sticker:
-            print("🧩 STICKER")
-
             file = await context.bot.get_file(msg.sticker.file_id)
             url = file.file_path
 
-            print("URL:", url)
-
-            # VIDEO STICKER
             if msg.sticker.is_video or msg.sticker.is_animated:
-                print("🎞 VIDEO STICKER")
-
                 client = SightengineClient(creds['api_user'], creds['api_secret'])
                 output = client.check('nudity-2.1').video_sync(url)
 
-                print("API:", output)
-
                 for frame in output.get("data", {}).get("frames", []):
                     score = max(frame.get("nudity", {}).values(), default=0)
-                    print("STICKER SCORE:", score)
-
                     if score > 0.2:
                         return await take_action(update, context)
 
             else:
-                print("🖼 NORMAL STICKER")
-
                 r = requests.get(
                     "https://api.sightengine.com/1.0/check.json",
                     params={
@@ -208,10 +217,7 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
                 data = r.json()
-                print("API:", data)
-
                 score = max(data.get("nudity", {}).values(), default=0)
-                print("🔥 STICKER SCORE:", score)
 
                 if score > 0.25:
                     return await take_action(update, context)
