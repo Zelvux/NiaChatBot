@@ -1,14 +1,16 @@
 import os
-from pyrogram import filters, Client
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import requests
-import subprocess
 import tempfile
 
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
+
+
+# ---------------- UPLOAD ---------------- #
 
 def upload_file(file_path):
     if not os.path.isfile(file_path):
-        return False, f"❖ ᴇʀʀᴏʀ : File not found at path {file_path}"
+        return False, "❖ Error: File not found"
 
     try:
         with open(file_path, "rb") as f:
@@ -19,180 +21,141 @@ def upload_file(file_path):
 
         if response.status_code == 200:
             try:
-                json_data = response.json()
-                return True, json_data.get("url", "❖ Uploaded but URL not found")
-            except Exception:
-                return True, response.text.strip()  # fallback to raw text if not JSON
+                return True, response.json().get("url")
+            except:
+                return True, response.text.strip()
         else:
-            return False, f"❖ ᴇʀʀᴏʀ : {response.status_code} - {response.text}"
+            return False, f"{response.status_code} - {response.text}"
 
     except Exception as e:
-        return False, f"❖ ᴇxᴄᴇᴘᴛɪᴏɴ : {str(e)}"
+        return False, str(e)
 
-@Client.on_message(filters.command(["tgm", "tgt", "telegraph", "tl"]))
-async def get_link_group(client, message):
-    if not message.reply_to_message:
-        return await message.reply_text(
-            "❖ ᴘʟᴇᴀsᴇ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇᴅɪᴀ ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴏɴ ᴛᴇʟᴇɢʀᴀᴘʜ"
-        )
+
+# ---------------- COMMAND ---------------- #
+
+async def telegraph_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message
+
+    if not message or not message.reply_to_message:
+        return await message.reply_text("❖ Reply to a media file")
 
     media = message.reply_to_message
+    file = None
     file_size = 0
+
+    # 🔥 detect media type
     if media.photo:
+        file = await context.bot.get_file(media.photo.file_id)
         file_size = media.photo.file_size
+
     elif media.video:
+        file = await context.bot.get_file(media.video.file_id)
         file_size = media.video.file_size
+
     elif media.document:
+        file = await context.bot.get_file(media.document.file_id)
         file_size = media.document.file_size
 
-    if file_size > 200 * 1024 * 1024:
-        return await message.reply_text("ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴍᴇᴅɪᴀ ғɪʟᴇ ᴜɴᴅᴇʀ 200 MB")
+    elif media.animation:
+        file = await context.bot.get_file(media.animation.file_id)
+        file_size = media.animation.file_size
+
+    elif media.sticker:
+        file = await context.bot.get_file(media.sticker.file_id)
+        file_size = media.sticker.file_size
+
+    if not file:
+        return await message.reply_text("❖ Unsupported media")
+
+    # 🔥 size check (200MB)
+    if file_size and file_size > 200 * 1024 * 1024:
+        return await message.reply_text("❖ File must be under 200MB")
+
+    text = await message.reply_text("⬇️ Downloading...")
 
     try:
-        text = await message.reply("❍ ᴘʀᴏᴄᴇssɪɴɢ...")
+        local_path = os.path.join(tempfile.gettempdir(), file.file_id)
 
-        async def progress(current, total):
-            try:
-                await text.edit_text(f"❍ ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ... {current * 100 / total:.1f}%")
-            except Exception:
-                pass
+        # download
+        await file.download_to_drive(local_path)
 
+        await text.edit_text("⬆️ Uploading to Telegraph...")
+
+        success, link = upload_file(local_path)
+
+        if success:
+            await text.edit_text(
+                f"✅ Telegraph Link:\n{link}",
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("Open Link", url=link)]]
+                ),
+            )
+        else:
+            await text.edit_text(f"❌ Upload failed:\n{link}")
+
+        # cleanup
         try:
-            local_path = await media.download(progress=progress)
-            await text.edit_text("❍ ᴜᴘʟᴏᴀᴅɪɴɢ ᴛᴏ ᴛᴇʟᴇɢʀᴀᴘʜ...")
+            os.remove(local_path)
+        except:
+            pass
 
-            success, upload_path = upload_file(local_path)
+    except Exception as e:
+        await text.edit_text(f"❌ Error:\n{e}")
 
-            if success:
-                await text.edit_text(
-                    f"❖ | [ᴛᴇʟᴇɢʀᴀᴘʜ ʟɪɴᴋ]({upload_path}) | ❖",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    "• ᴛᴇʟᴇɢʀᴀᴘʜ ʟɪɴᴋ •",
-                                    url=upload_path,
-                                )
-                            ]
-                        ]
-                    ),
-                )
-            else:
-                await text.edit_text(
-                    f"❖ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ ᴡʜɪʟᴇ ᴜᴘʟᴏᴀᴅɪɴɢ ʏᴏᴜʀ ғɪʟᴇ\n{upload_path}"
-                )
 
-            try:
-                os.remove(local_path)
-            except Exception:
-                pass
+# ---------------- GET URL (FOR NSFW ETC) ---------------- #
 
-        except Exception as e:
-            await text.edit_text(f"❖ | ғɪʟᴇ ᴜᴘʟᴏᴀᴅ ғᴀɪʟᴇᴅ\n\n<i>❍ ʀᴇᴀsᴏɴ : {e}</i>")
-            try:
-                os.remove(local_path)
-            except Exception:
-                pass
-            return
-    except Exception:
-        pass
+async def get_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message or update.callback_query.message
 
-import os
-import tempfile
-import subprocess
+    if not message:
+        return None
 
-async def get_url(client, message):
+    file = None
     file_size = 0
+
     if message.photo:
-        file_size = message.photo.file_size
+        file = await context.bot.get_file(message.photo[-1].file_id)
+        file_size = message.photo[-1].file_size
+
     elif message.video:
+        file = await context.bot.get_file(message.video.file_id)
         file_size = message.video.file_size
-    elif message.animation:
-        file_size = message.animation.file_size
-    elif message.sticker:
-        file_size = message.sticker.file_size
+
     elif message.document:
+        file = await context.bot.get_file(message.document.file_id)
         file_size = message.document.file_size
 
-    if file_size > 200 * 1024 * 1024:
-        return
+    elif message.animation:
+        file = await context.bot.get_file(message.animation.file_id)
+        file_size = message.animation.file_size
+
+    elif message.sticker:
+        file = await context.bot.get_file(message.sticker.file_id)
+        file_size = message.sticker.file_size
+
+    if not file:
+        return None
+
+    if file_size and file_size > 200 * 1024 * 1024:
+        return None
 
     try:
-        local_path = await message.download()
+        local_path = os.path.join(tempfile.gettempdir(), file.file_id)
 
-        if message.sticker:
-            if local_path.endswith('.webm'):
-                local_path = await convert_sticker_to_image(client, message)
-                success, upload_path = upload_file(local_path)
-                if success:
-                    return upload_path
+        await file.download_to_drive(local_path)
 
-        success, upload_path = upload_file(local_path)
+        success, url = upload_file(local_path)
+
+        try:
+            os.remove(local_path)
+        except:
+            pass
+
         if success:
-            print(upload_path)
-            return upload_path
-
-        try:
-            os.remove(local_path)
-        except Exception:
-            pass
+            return url
 
     except Exception as e:
-        try:
-            os.remove(local_path)
-        except Exception:
-            pass
-        return
+        print(f"[get_url error] {e}")
 
-
-async def convert_sticker_to_image(client, message):
-    try:
-        sticker = await message.download(file_name=tempfile.gettempdir() + "/sticker.webm")
-        output_path = tempfile.gettempdir() + "/sticker.jpg"
-        ffmpeg_command = [
-            "ffmpeg",
-            "-i", sticker,
-            "-vf", r"select=eq(n\,0)",
-            "-vframes", "1",
-            "-q:v", "2",
-            "-y",
-            output_path
-        ]
-        subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if os.path.exists(output_path):
-            return output_path
-    except Exception as e:
-        print(e)
-        if os.path.exists(sticker):
-            os.remove(sticker)
-        if os.path.exists(output_path):
-            os.remove(output_path)
-        return None
-
-
-async def convert_sticker_to_video(client, message):
-    try:
-        sticker = await message.download(file_name=tempfile.gettempdir() + "/sticker.webm")
-        output_path = tempfile.gettempdir() + "/sticker.mp4"
-        ffmpeg_command = [
-            "ffmpeg",
-            "-i", sticker,
-            "-c:v", "libx264",
-            "-c:a", "aac",
-            "-b:v", "800k",
-            "-b:a", "128k",
-            "-y",
-            output_path
-        ]
-        subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if os.path.exists(output_path):
-            print(f"output path is: {output_path}")
-            await message.reply_video(output_path)
-            return output_path
-    except Exception as e:
-        print(e)
-        if os.path.exists(sticker):
-            os.remove(sticker)
-        if os.path.exists(output_path):
-            os.remove(output_path)
-        return None
+    return None
