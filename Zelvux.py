@@ -182,8 +182,6 @@ if __name__ == '__main__':
             group=6
         )
         
-        # 5. Group Tracking (FIXED: Uses Async function from events.py)
-        app_bot.add_handler(MessageHandler(filters.ChatType.GROUPS, events.group_tracker), group=5)
        
 # ---------------- NSFW ----------------
 
@@ -205,7 +203,8 @@ app_bot.add_handler(
     CallbackQueryHandler(nsfw.review_callback),
     group=2
 )
-
-
+        # 5. Group Tracking (FIXED: Uses Async function from events.py)
+        app_bot.add_handler(MessageHandler(filters.ChatType.GROUPS, events.group_tracker), group=5)
+        
         print("ꝛʏᴧηʙᴧᴋᴧ ʙσᴛ ꜱᴛᴀʀᴛɪɴɢ ᴩᴏʟʟɪɴɢ...")
         app_bot.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
