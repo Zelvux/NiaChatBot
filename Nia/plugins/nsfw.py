@@ -189,44 +189,45 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     file = None
     local_path = None
+    url = None
 
     try:
-        # GET FILE
+        # 🔥 PHOTO (DIRECT)
         if msg.photo:
             file = await msg.photo[-1].get_file()
-            ext = ".jpg"
+            url = file.file_path
 
-        elif msg.sticker:
-            file = await context.bot.get_file(msg.sticker.file_id)
-            ext = ".webp"
-
-        elif msg.animation:
-            file = await context.bot.get_file(msg.animation.file_id)
-            ext = ".mp4"
-
+        # 🔥 VIDEO (DIRECT)
         elif msg.video:
             file = await context.bot.get_file(msg.video.file_id)
-            ext = ".mp4"
+            url = file.file_path
 
-        if not file:
-            return
+        # 🔥 GIF / ANIMATION (DIRECT)
+        elif msg.animation:
+            file = await context.bot.get_file(msg.animation.file_id)
+            url = file.file_path
 
-        # DOWNLOAD
-        local_path = os.path.join(tempfile.gettempdir(), file.file_id + ext)
-        await file.download_to_drive(local_path)
+        # 🔥 STICKER (UPLOAD)
+        elif msg.sticker:
+            file = await context.bot.get_file(msg.sticker.file_id)
 
-        print("📥 Downloaded:", local_path)
+            ext = ".webp"
+            local_path = os.path.join(tempfile.gettempdir(), file.file_id + ext)
 
-        # UPLOAD
-        url = upload_file(local_path)
+            await file.download_to_drive(local_path)
 
+            print("📥 Sticker Downloaded:", local_path)
+
+            url = upload_file(local_path)
+
+        # ❌ अगर URL नहीं मिला
         if not url:
-            print("❌ Upload failed")
+            print("❌ URL missing / upload failed")
             return
 
-        print("🌐 Uploaded URL:", url)
+        print("🌐 Using URL:", url)
 
-        # API CALL
+        # 🔥 API CALL
         params = {
             "url": url,
             "models": "nudity-2.1",
