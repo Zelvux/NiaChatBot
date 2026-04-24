@@ -205,14 +205,3 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         print("NSFW Error:", e)
-
-
-# ---------------- SETUP ----------------
-def setup(app):
-    app.add_handler(CommandHandler("nsfwcheck", nsfw_command))
-    app.add_handler(MessageHandler(
-        (filters.PHOTO | filters.Sticker.ALL | filters.VIDEO | filters.ANIMATION)
-        & filters.ChatType.GROUPS,
-        check_nsfw
-    ))
-    app.add_handler(CallbackQueryHandler(review_callback))
