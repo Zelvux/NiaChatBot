@@ -182,13 +182,13 @@ if __name__ == '__main__':
             group=6
         )
         
-        # NSFW COMMAND
+        # ---------------- NSFW ----------------
+
 app_bot.add_handler(
     CommandHandler("nsfwcheck", nsfw.nsfw_command),
     group=2
 )
 
-# NSFW DETECTION
 app_bot.add_handler(
     MessageHandler(
         (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL)
@@ -198,7 +198,6 @@ app_bot.add_handler(
     group=3
 )
 
-# OPTIONAL (agar button use kar raha hai tabhi rakho)
 app_bot.add_handler(
     CallbackQueryHandler(nsfw.review_callback),
     group=2
