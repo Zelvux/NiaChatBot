@@ -167,6 +167,7 @@ if __name__ == '__main__':
             MessageHandler(
                 (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL)
                 & filters.ChatType.GROUPS,
+                & ~filters.COMMAND
                 nsfw.check_nsfw
             ),
             group=1
