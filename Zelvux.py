@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
         app_bot.add_handler(
             MessageHandler(
-                (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL) & filters.ChatType.GROUPS & (~filters.COMMAND),
+                (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL) & filters.ChatType.GROUPS & (filters.COMMAND),
                 nsfw.check_nsfw
             ),
             group=1
