@@ -165,34 +165,21 @@ if __name__ == '__main__':
 
         app_bot.add_handler(
             MessageHandler(
-                (
-                    filters.PHOTO
-                    filters.VIDEO
-                    filters.ANIMATION
-                    filters.Sticker.ALL
-                )
-                & filters.ChatType.GROUPS
-                & (~filters.COMMAND),
+                (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL) & filters.ChatType.GROUPS & (~filters.COMMAND),
                 nsfw.check_nsfw
             ),
             group=1
         )
 
         app_bot.add_handler(
-            CommandHandler(
-                "nsfwcheck",
-                nsfw.nsfw_command
-            ),
+            CommandHandler("nsfwcheck", nsfw.nsfw_command),
             group=0
         )
 
         app_bot.add_handler(
-            CallbackQueryHandler(
-                nsfw.review_callback
-            ),
+            CallbackQueryHandler(nsfw.review_callback),
             group=2
         )
-        
         # 5. Group Tracking (FIXED: Uses Async function from events.py)
         app_bot.add_handler(MessageHandler(filters.ChatType.GROUPS, events.group_tracker), group=5)
         
