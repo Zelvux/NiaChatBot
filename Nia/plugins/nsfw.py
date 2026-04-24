@@ -21,6 +21,7 @@ from telegram.ext import (
 )
 
 from motor.motor_asyncio import AsyncIOMotorClient as MongoCli
+from sightengine.client import SightengineClient
 
 # ---------------- DATABASE ----------------
 NSFW = MongoCli("mongodb+srv://nsfwstorage:a@cluster0.c3iqn53.mongodb.net/?appName=Cluster0")
@@ -38,6 +39,10 @@ nsfw_ignore_cache = []
 
 LOAD = False
 
+# 🔥 MULTI API (SAFE)
+api_credentials = [
+    {'api_user': '1820340144', 'api_secret': 'sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz'},
+]
 
 # ---------------- CACHE ----------------
 async def load_caches():
@@ -79,9 +84,7 @@ async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------------- COMMAND ----------------
 async def nsfw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        return await update.message.reply_text(
-            "Use:\n/nsfwcheck on\n/nsfwcheck off"
-        )
+        return await update.message.reply_text("Use:\n/nsfwcheck on\n/nsfwcheck off")
 
     if not await is_admin(update, context):
         return await update.message.reply_text("❌ Admin only command")
@@ -113,8 +116,6 @@ async def nsfw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------------- ACTION ----------------
 async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
-
-    print("🔥 ACTION TRIGGERED")
 
     try:
         await msg.delete()
@@ -165,64 +166,79 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if status == "disabled":
         return
 
-    url = None
-
     try:
-        # 🔥 DIRECT TELEGRAM URL
+        creds = random.choice(api_credentials)
+
+        # ---------------- PHOTO ----------------
         if msg.photo:
             file = await msg.photo[-1].get_file()
             url = file.file_path
 
-        elif msg.video:
-            file = await context.bot.get_file(msg.video.file_id)
+            params = {
+                "url": url,
+                "models": "nudity-2.1",
+                "api_user": creds['api_user'],
+                "api_secret": creds['api_secret']
+            }
+
+            r = requests.get("https://api.sightengine.com/1.0/check.json", params=params)
+            data = json.loads(r.text)
+
+            nudity = data.get("nudity", {})
+            score = max(nudity.values()) if nudity else 0
+
+            if score > 0.25:
+                return await take_action(update, context)
+
+        # ---------------- VIDEO / GIF ----------------
+        elif msg.video or msg.animation:
+            file = await context.bot.get_file(
+                msg.video.file_id if msg.video else msg.animation.file_id
+            )
             url = file.file_path
 
-        elif msg.animation:
-            file = await context.bot.get_file(msg.animation.file_id)
-            url = file.file_path
+            client = SightengineClient(creds['api_user'], creds['api_secret'])
+            output = client.check('nudity-2.1').video_sync(url)
 
+            for frame in output.get('data', {}).get('frames', []):
+                nudity = frame.get('nudity', {})
+
+                if max(nudity.values(), default=0) > 0.2:
+                    return await take_action(update, context)
+
+        # ---------------- STICKER ----------------
         elif msg.sticker:
             file = await context.bot.get_file(msg.sticker.file_id)
             url = file.file_path
 
-        if not url:
-            print("❌ URL not found")
-            return
+            # 🔥 VIDEO STICKER
+            if msg.sticker.is_video or msg.sticker.is_animated:
+                client = SightengineClient(creds['api_user'], creds['api_secret'])
+                output = client.check('nudity-2.1').video_sync(url)
 
-        print("🌐 Using URL:", url)
+                for frame in output.get('data', {}).get('frames', []):
+                    nudity = frame.get('nudity', {})
 
-        # 🔥 API CALL
-        params = {
-            "url": url,
-            "models": "nudity-2.1",
-            "api_user": "1820340144",
-            "api_secret": "sKYJTbM7EMA5ycYd8EKgLZF5BxEjmwwz"
-        }
+                    if max(nudity.values(), default=0) > 0.2:
+                        return await take_action(update, context)
 
-        r = requests.get(
-            "https://api.sightengine.com/1.0/check.json",
-            params=params,
-            timeout=15
-        )
+            # 🔥 NORMAL STICKER
+            else:
+                params = {
+                    "url": url,
+                    "models": "nudity-2.1",
+                    "api_user": creds['api_user'],
+                    "api_secret": creds['api_secret']
+                }
 
-        data = json.loads(r.text)
+                r = requests.get("https://api.sightengine.com/1.0/check.json", params=params)
+                data = json.loads(r.text)
 
-        print("API RESPONSE:", data)
+                nudity = data.get("nudity", {})
+                score = max(nudity.values()) if nudity else 0
 
-        nudity = data.get("nudity", {})
-
-        score = max([
-            nudity.get("sexual_activity", 0),
-            nudity.get("sexual_display", 0),
-            nudity.get("erotica", 0),
-            nudity.get("very_suggestive", 0)
-        ])
-
-        print("🔥 NSFW SCORE:", score)
-
-        # 🔥 FINAL DECISION
-        if score > 0.25:
-            await take_action(update, context)
+                if score > 0.25:
+                    return await take_action(update, context)
 
     except Exception as e:
         print("NSFW Error:", e)
