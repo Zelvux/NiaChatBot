@@ -155,7 +155,7 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             should_reply = True
             text = text.replace(f"@{bot_username}", "").strip()
 
-        elif text.lower().startswith(("hiii", "heeey", "hellllo", "niaaa", "oyeee", "suuun")):
+        elif text.lower().startswith(("hi", "hey", "hello", "nia", "oye", "sun")):
             should_reply = True
 
     if not should_reply:
