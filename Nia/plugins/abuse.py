@@ -1,8 +1,9 @@
+import re
 from telegram import Update
 from telegram.ext import ContextTypes
 
-# 🔥 abuse words
-abuse_words = set([
+# 🔥 STEP 1: sirf apne words
+abuse_words = [
     "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
     "bevda", "bewda", "bevdey", "bewday", "bevakoof", "bevkoof", "bevkuf", "bewakoof", "bewkoof", "bewkuf", "bhadua",
     "bhaduaa", "bhadva", "bhadvaa", "bhadwa", "bhadwaa", "bhosada", "bhosda", "bhosdaa", "bhosdike", "bhonsdike",
@@ -29,7 +30,16 @@ abuse_words = set([
     "मारो", "मारूंगा", "मादरचोद", "मादरचूत", "मादरचुत", "मम्मे", "मूत", "मुत", "मूतने", "मुतने", "मूठ", "मुठ",
     "नुननी", "नुननु", "पाजी", "पेसाब", "पेशाब", "पिल्ला", "पिल्ले", "पिसाब", "पोरकिस्तान", "रांड", "रंडी",
     "सुअर", "सूअर", "टट्टे", "टट्टी", "उल्लू"
-])
+]
+
+# 🔥 STEP 2: normalize words (same logic)
+def normalize(text):
+    text = text.lower()
+    text = re.sub(r'[^a-zA-Z0-9\u0900-\u097F]', '', text)  # remove symbols
+    return text
+
+# 🔥 normalize abuse words once
+normalized_abuse = set(normalize(word) for word in abuse_words)
 
 # ---------------- FILTER ---------------- #
 
@@ -42,8 +52,15 @@ async def abuse_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         text = message.text.lower()
 
-        if any(word in text for word in abuse_words):
-            await message.delete()
+        # 🔥 split words properly
+        words = text.split()
+
+        for word in words:
+            clean_word = normalize(word)
+
+            if clean_word in normalized_abuse:
+                await message.delete()
+                return
 
     except Exception as e:
         print(f"[Abuse Filter Error] {e}")
