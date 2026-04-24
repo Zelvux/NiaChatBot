@@ -46,13 +46,18 @@ def upload_file(file_path):
             res = requests.post(
                 "https://catbox.moe/user/api.php",
                 data={"reqtype": "fileupload"},
-                files={"fileToUpload": f},
-                timeout=20
+                files={"fileToUpload": (os.path.basename(file_path), f)},
+                timeout=30
             )
+
         if res.status_code == 200:
             return res.text.strip()
+        else:
+            print("Upload Failed:", res.status_code, res.text)
+
     except Exception as e:
         print("Upload Error:", e)
+
     return None
 
 
@@ -189,21 +194,25 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # GET FILE
         if msg.photo:
             file = await msg.photo[-1].get_file()
+            ext = ".jpg"
 
         elif msg.sticker:
             file = await context.bot.get_file(msg.sticker.file_id)
+            ext = ".webp"
 
         elif msg.animation:
             file = await context.bot.get_file(msg.animation.file_id)
+            ext = ".mp4"
 
         elif msg.video:
             file = await context.bot.get_file(msg.video.file_id)
+            ext = ".mp4"
 
         if not file:
             return
 
         # DOWNLOAD
-        local_path = os.path.join(tempfile.gettempdir(), file.file_id)
+        local_path = os.path.join(tempfile.gettempdir(), file.file_id + ext)
         await file.download_to_drive(local_path)
 
         print("📥 Downloaded:", local_path)
