@@ -1,9 +1,19 @@
+import re
 from telegram import Update
 from telegram.ext import ContextTypes
 
-# 🔥 FULL ABUSE LIST (tu apni puri list yaha paste kar sakta hai)
-abuse_words = set([
-    "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
+async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        message = update.message
+
+        if not message:
+            return
+
+        ok = await message.reply_text("🔍 Searching abusive replies...")
+
+        # 🔥 tera full abuse list
+        abuse_list = [
+            "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
     "bevda", "bewda", "bevdey", "bewday", "bevakoof", "bevkoof", "bevkuf", "bewakoof", "bewkoof", "bewkuf", "bhadua",
     "bhaduaa", "bhadva", "bhadvaa", "bhadwa", "bhadwaa", "bhosada", "bhosda", "bhosdaa", "bhosdike", "bhonsdike",
     "bsdk", "b.s.d.k", "bhosdiki", "bhosdiwala", "bhosdiwale", "bhosadchodal", "bhosadchod", "babbe", "babbey", "bube",
@@ -29,23 +39,27 @@ abuse_words = set([
     "मारो", "मारूंगा", "मादरचोद", "मादरचूत", "मादरचुत", "मम्मे", "मूत", "मुत", "मूतने", "मुतने", "मूठ", "मुठ",
     "नुननी", "नुननु", "पाजी", "पेसाब", "पेशाब", "पिल्ला", "पिल्ले", "पिसाब", "पोरकिस्तान", "रांड", "रंडी",
     "सुअर", "सूअर", "टट्टे", "टट्टी", "उल्लू"
-])
+        ]
 
-# ---------------- MAIN FILTER ---------------- #
+        deleted_count = 0
 
-async def abuse_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        message = update.message
+        # 🔥 SAFE LOOP (best method)
+        for word in abuse_list:
+            regex = {"$regex": word, "$options": "i"}
 
-        # safety check
-        if not message or not message.text:
-            return
+            result = await chatai.delete_many({
+                "$or": [
+                    {"word": regex},
+                    {"text": regex}
+                ]
+            })
 
-        text = message.text.lower()
+            deleted_count += result.deleted_count
 
-        # 🔴 abuse detect
-        if any(word in text for word in abuse_words):
-            await message.delete()
+        await ok.edit_text(f"✅ Deleted {deleted_count} abusive replies.")
+
+        await load_caches()
 
     except Exception as e:
-        print(f"[Abuse Filter Error] {e}")
+        print(f"[ERROR delete_abusive_replies] {e}")
+        await message.reply_text("❌ Error while deleting.")
