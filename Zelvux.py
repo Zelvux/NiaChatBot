@@ -149,6 +149,7 @@ if __name__ == '__main__':
         app_bot.add_handler(CommandHandler("welcome", welcome.welcome_command))
         app_bot.add_handler(CommandHandler("broadcast", broadcast.broadcast))
         app_bot.add_handler(CommandHandler("sudo", admin.sudo_help))
+        app_bot.add_handler(CommandHandler("cleanabuse", niachatbot.clean_abuse_command))
         app_bot.add_handler(CommandHandler("sudostdlist", admin.sudostdlist))
         app_bot.add_handler(CommandHandler("addsudo", admin.addsudo))
         app_bot.add_handler(CommandHandler("rmsudo", admin.rmsudo))
