@@ -1,5 +1,3 @@
-# ----- NSFW SYSTEM (PTB FULL VERSION) -----
-
 import json
 import random
 import asyncio
@@ -114,10 +112,12 @@ async def nsfw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
 
+    print("🔥 ACTION TRIGGERED")
+
     try:
         await msg.delete()
-    except:
-        pass
+    except Exception as e:
+        print("Delete failed:", e)
 
     try:
         user = msg.from_user.mention_html()
@@ -134,8 +134,8 @@ async def take_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg.from_user.id,
             permissions=ChatPermissions(can_send_messages=False)
         )
-    except:
-        pass
+    except Exception as e:
+        print("Restrict failed:", e)
 
 
 # ---------------- REVIEW ----------------
@@ -164,18 +164,25 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if status == "disabled":
         return
 
-    # ---- FILE URL ----
     file = None
 
     try:
         if msg.photo:
             file = await msg.photo[-1].get_file()
+
         elif msg.sticker:
+            # 🔥 animated sticker skip
+            if msg.sticker.is_animated or msg.sticker.is_video:
+                print("⚠️ Skipping animated sticker")
+                return
             file = await context.bot.get_file(msg.sticker.file_id)
+
         elif msg.animation:
             file = await context.bot.get_file(msg.animation.file_id)
+
         elif msg.video:
             file = await context.bot.get_file(msg.video.file_id)
+
     except Exception as e:
         print("File Error:", e)
         return
@@ -185,7 +192,8 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     url = file.file_path
 
-    # ---- API ----
+    print("🔍 Checking URL:", url)
+
     params = {
         "url": url,
         "models": "nudity-2.1",
@@ -202,6 +210,8 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         data = json.loads(r.text)
 
+        print("API RESPONSE:", data)
+
         nudity = data.get("nudity", {})
 
         score = max([
@@ -211,7 +221,10 @@ async def check_nsfw(update: Update, context: ContextTypes.DEFAULT_TYPE):
             nudity.get("very_suggestive", 0)
         ])
 
-        if score > 0.4:
+        print("🔥 NSFW SCORE:", score)
+
+        # 🔥 lowered threshold for testing
+        if score > 0.2:
             await take_action(update, context)
 
     except Exception as e:
