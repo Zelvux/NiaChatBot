@@ -152,6 +152,27 @@ if __name__ == '__main__':
         # 4. AI Chat
         app_bot.add_handler(MessageHandler((filters.TEXT | filters.Sticker.ALL) & ~filters.COMMAND, chatbot.ai_message_handler), group=4)
 
+        # 🔥 Abuse Filter
+app_bot.add_handler(
+    MessageHandler(
+        filters.TEXT & filters.ChatType.GROUPS & ~filters.COMMAND,
+        abuse.abuse_filter
+    ),
+    group=6
+)
+
+        # ---------------- NSFW ----------------
+
+app_bot.add_handler(CommandHandler("nsfwcheck", nsfw.nsfw_command))
+
+app_bot.add_handler(MessageHandler(
+    (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL)
+    & filters.ChatType.GROUPS,
+    nsfw.check_nsfw
+))
+
+app_bot.add_handler(CallbackQueryHandler(nsfw.review_callback))
+        
         # 5. Group Tracking (FIXED: Uses Async function from events.py)
         app_bot.add_handler(MessageHandler(filters.ChatType.GROUPS, events.group_tracker), group=5)
         
