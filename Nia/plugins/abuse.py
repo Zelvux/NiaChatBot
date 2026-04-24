@@ -2,18 +2,13 @@ import re
 from telegram import Update
 from telegram.ext import ContextTypes
 
-async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        message = update.message
+# 🔥 IMPORTANT: chatai & load_caches import kar
+from Nia.database import chatai   # 👉 apne project ke hisab se path check kar
+from Nia.utils import load_caches  # 👉 agar alag file me hai to correct kar
 
-        if not message:
-            return
-
-        ok = await message.reply_text("🔍 Searching abusive replies...")
-
-        # 🔥 tera full abuse list
-        abuse_list = [
-            "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
+# 🔥 ABUSE LIST (tera full list)
+abuse_list = [
+    "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
     "bevda", "bewda", "bevdey", "bewday", "bevakoof", "bevkoof", "bevkuf", "bewakoof", "bewkoof", "bewkuf", "bhadua",
     "bhaduaa", "bhadva", "bhadvaa", "bhadwa", "bhadwaa", "bhosada", "bhosda", "bhosdaa", "bhosdike", "bhonsdike",
     "bsdk", "b.s.d.k", "bhosdiki", "bhosdiwala", "bhosdiwale", "bhosadchodal", "bhosadchod", "babbe", "babbey", "bube",
@@ -39,27 +34,48 @@ async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_T
     "मारो", "मारूंगा", "मादरचोद", "मादरचूत", "मादरचुत", "मम्मे", "मूत", "मुत", "मूतने", "मुतने", "मूठ", "मुठ",
     "नुननी", "नुननु", "पाजी", "पेसाब", "पेशाब", "पिल्ला", "पिल्ले", "पिसाब", "पोरकिस्तान", "रांड", "रंडी",
     "सुअर", "सूअर", "टट्टे", "टट्टी", "उल्लू"
-        ]
+]
+
+# 🔥 TEXT CLEAN FUNCTION (ANTI-BYPASS)
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r'[^a-zA-Z0-9\u0900-\u097F]', '', text)
+    return text
+
+# ---------------- MAIN FUNCTION ---------------- #
+
+async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        message = update.message
+        if not message:
+            return
+
+        ok = await message.reply_text("🔍 Searching abusive replies...")
 
         deleted_count = 0
 
-        # 🔥 SAFE LOOP (best method)
-        for word in abuse_list:
-            regex = {"$regex": word, "$options": "i"}
+        # 🔥 FAST COMBINED REGEX
+        pattern = "|".join(map(re.escape, abuse_list))
 
-            result = await chatai.delete_many({
-                "$or": [
-                    {"word": regex},
-                    {"text": regex}
-                ]
-            })
+        query = {
+            "$or": [
+                {"word": {"$regex": pattern, "$options": "i"}},
+                {"text": {"$regex": pattern, "$options": "i"}}
+            ]
+        }
 
-            deleted_count += result.deleted_count
+        result = await chatai.delete_many(query)
+        deleted_count = result.deleted_count
 
         await ok.edit_text(f"✅ Deleted {deleted_count} abusive replies.")
 
-        await load_caches()
+        # 🔥 cache reload (safe)
+        try:
+            await load_caches()
+        except:
+            pass
 
     except Exception as e:
         print(f"[ERROR delete_abusive_replies] {e}")
-        await message.reply_text("❌ Error while deleting.")
+        if update.message:
+            await update.message.reply_text("❌ Error while deleting.")
