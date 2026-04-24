@@ -2,11 +2,18 @@ import re
 from telegram import Update
 from telegram.ext import ContextTypes
 
-# 🔥 IMPORTANT: chatai & load_caches import kar
-from Nia.database import chatai   # 👉 apne project ke hisab se path check kar
-from Nia.utils import load_caches  # 👉 agar alag file me hai to correct kar
+# 🔥 apna actual collection import kar (IMPORTANT)
+from Nia.database import chatbot_collection  # 👉 isko apne project ke hisab se check kar
 
-# 🔥 ABUSE LIST (tera full list)
+# 🔥 optional
+try:
+    from Nia.utils import load_caches
+except:
+    load_caches = None
+
+
+# ---------------- ABUSE LIST ---------------- #
+
 abuse_list = [
     "aad", "aand", "bahenchod", "behenchod", "bhenchod", "bhenchodd", "b.c.", "bc", "bakchod", "bakchodd", "bakchodi",
     "bevda", "bewda", "bevdey", "bewday", "bevakoof", "bevkoof", "bevkuf", "bewakoof", "bewkoof", "bewkuf", "bhadua",
@@ -36,12 +43,6 @@ abuse_list = [
     "सुअर", "सूअर", "टट्टे", "टट्टी", "उल्लू"
 ]
 
-# 🔥 TEXT CLEAN FUNCTION (ANTI-BYPASS)
-def clean_text(text):
-    text = text.lower()
-    text = re.sub(r'[^a-zA-Z0-9\u0900-\u097F]', '', text)
-    return text
-
 # ---------------- MAIN FUNCTION ---------------- #
 
 async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,26 +55,27 @@ async def delete_abusive_replies(update: Update, context: ContextTypes.DEFAULT_T
 
         deleted_count = 0
 
-        # 🔥 FAST COMBINED REGEX
-        pattern = "|".join(map(re.escape, abuse_list))
-
-        query = {
-            "$or": [
-                {"word": {"$regex": pattern, "$options": "i"}},
-                {"text": {"$regex": pattern, "$options": "i"}}
-            ]
-        }
-
-        result = await chatai.delete_many(query)
-        deleted_count = result.deleted_count
+        # 🔥 SAFE METHOD (NO CRASH)
+        for word in abuse_list:
+            try:
+                result = await chatbot_collection.delete_many({
+                    "$or": [
+                        {"word": {"$regex": word, "$options": "i"}},
+                        {"text": {"$regex": word, "$options": "i"}}
+                    ]
+                })
+                deleted_count += result.deleted_count
+            except:
+                continue
 
         await ok.edit_text(f"✅ Deleted {deleted_count} abusive replies.")
 
-        # 🔥 cache reload (safe)
-        try:
-            await load_caches()
-        except:
-            pass
+        # 🔥 cache reload
+        if load_caches:
+            try:
+                await load_caches()
+            except:
+                pass
 
     except Exception as e:
         print(f"[ERROR delete_abusive_replies] {e}")
