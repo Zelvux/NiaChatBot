@@ -177,7 +177,7 @@ if __name__ == '__main__':
             group=3
         )
 
-         optional (agar function exist karta hai)
+         # optional (agar function exist karta hai)
          app_bot.add_handler(
              CallbackQueryHandler(nsfw.review_callback),
              group=2
