@@ -163,34 +163,30 @@ if __name__ == '__main__':
 
                 # ---------------- NSFW ----------------
 
-        # 🔥 1. NSFW DETECTION (FIRST)
         app_bot.add_handler(
             MessageHandler(
                 (filters.PHOTO | filters.VIDEO | filters.ANIMATION | filters.Sticker.ALL)
                 & filters.ChatType.GROUPS,
-                nsfw.check_nsfw,
-           ),
-           group=1,
+                nsfw.check_nsfw
+            ),
+            group=1
         )
 
-        # 🔥 2. NSFW COMMAND
         app_bot.add_handler(
-            CommandHandler(
-                "nsfwcheck",
-                nsfw.nsfw_command,
+           CommandHandler(
+               "nsfwcheck",
+               nsfw.nsfw_command
            ),
-           group=2,
+           group=2
         )
 
-        # 🔥 3. CALLBACK (optional)
+        # 🔥 CALLBACK (future buttons support)
         app_bot.add_handler(
             CallbackQueryHandler(
-                nsfw.review_callback,
+                nsfw.review_callback
             ),
-            group=3,
+            group=3
         )
-
-   
         # 5. Group Tracking (FIXED: Uses Async function from events.py)
         app_bot.add_handler(MessageHandler(filters.ChatType.GROUPS, events.group_tracker), group=5)
         
