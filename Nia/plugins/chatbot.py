@@ -11,7 +11,7 @@ from Nia.database import chatbot_collection
    
 # -------- SETTINGS --------
 
-API_URL = "https://niaapi-28892feecb5a.herokuapp.com/?text="
+API_URL = "https://aikigf.vercel.app/gf?prompt="
 
 MAX_HISTORY = 6
 
